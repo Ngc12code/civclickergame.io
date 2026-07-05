@@ -1,0 +1,3012 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>CivClicker Age of Progress</title>
+    <!-- CrazyGames HTML5 SDK: safe to run outside the CrazyGames platform (will bypass if real script is absent) -->
+    <script src="https://sdk.crazygames.com/crazygames-sdk-v3.js"></script>
+    <style>
+        :root {
+            --bg-dark: #090d16;
+            --panel-bg: #1e293b;
+            --panel-inner: #0f172a;
+            --primary: #3b82f6;
+            --success: #10b981;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+            --purple: #8b5cf6;
+            --teal: #14b8a6;
+            --orange: #f97316;
+            --text: #f8fafc;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-dark);
+            color: var(--text);
+            margin: 0;
+            padding: 15px;
+            display: flex;
+            justify-content: center;
+            min-height: 100vh;
+            user-select: none;
+            overflow-x: hidden;
+            touch-action: manipulation;
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+        }
+
+        body, button {
+            touch-action: manipulation;
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            user-select: none;
+        }
+
+        body.raid-flash { animation: flashRed 0.3s infinite; }
+        @keyframes flashRed { 0%, 100% { background-color: var(--bg-dark); } 50% { background-color: #450a0a; } }
+
+        /* Start Screen Styles */
+        #start-screen {
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+            background: linear-gradient(rgba(9, 13, 22, 0.85), rgba(15, 23, 42, 0.95)), url('https://images.unsplash.com/photo-1451187580459-43490279c0fa?q=80&w=1200') no-repeat center center/cover;
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+            z-index: 1000; transition: 0.5s ease-out; text-align: center; padding: 20px; box-sizing: border-box;
+        }
+        .start-title { font-size: 3rem; font-weight: 900; background: linear-gradient(to right, #f59e0b, #8b5cf6); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 10px; text-shadow: 0 4px 20px rgba(139, 92, 246, 0.4); }
+        .start-sub { color: #94a3b8; font-size: 1.1rem; margin-bottom: 30px; max-width: 600px; }
+        .civ-select-container { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; width: 100%; max-width: 700px; margin-bottom: 30px; }
+        .civ-card { background: rgba(30, 41, 59, 0.7); border: 2px solid #475569; padding: 15px; border-radius: 8px; cursor: pointer; transition: 0.3s; }
+        .civ-card:hover { border-color: var(--warning); transform: translateY(-3px); background: rgba(30, 41, 59, 0.9); }
+        .civ-card.selected { border-color: var(--primary); background: rgba(59, 130, 246, 0.2); box-shadow: 0 0 15px rgba(59, 130, 246, 0.4); }
+        .btn-start-game { background: linear-gradient(135deg, var(--warning), var(--orange)); color: white; border: none; padding: 15px 40px; font-size: 1.2rem; font-weight: bold; border-radius: 30px; cursor: pointer; box-shadow: 0 5px 15px rgba(245, 158, 11, 0.4); transition: 0.2s; }
+        .btn-start-game:hover { transform: scale(1.05); }
+
+        /* Game Main Layout */
+        .game-container {
+            width: 100%; max-width: 1400px; background: var(--panel-bg); border: 1px solid #475569; border-radius: 12px; padding: 15px; box-shadow: 0 20px 40px rgba(0,0,0,0.7); display: flex; flex-direction: column; gap: 12px;
+        }
+        .game-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #475569; padding-bottom: 8px; }
+        .era-badge { background: linear-gradient(135deg, var(--orange), var(--purple)); color: white; padding: 6px 16px; border-radius: 20px; font-weight: bold; font-size: 0.9rem; }
+        
+        /* Central Globe Map Area */
+        .central-hub { 
+            background: var(--panel-inner); 
+            border: 1px solid #334155; 
+            border-radius: 8px; 
+            padding: 15px; 
+            display: grid;
+            grid-template-columns: 1.5fr 1fr;
+            gap: 20px;
+            align-items: center;
+        }
+        .map-section {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background: radial-gradient(ellipse at 50% 30%, #0b1326 0%, #020617 70%);
+            padding: 14px 10px;
+            border-radius: 8px;
+            border: 1px solid #1e293b;
+            position: relative;
+            overflow: hidden;
+        }
+        /* Twinkling starfield behind globe */
+        .starfield {
+            position: absolute; inset: 0; pointer-events: none;
+            background-image:
+                radial-gradient(1px 1px at 10% 20%, #fff, transparent),
+                radial-gradient(1px 1px at 80% 15%, #fff, transparent),
+                radial-gradient(1px 1px at 30% 80%, #fff, transparent),
+                radial-gradient(1.5px 1.5px at 65% 60%, #93c5fd, transparent),
+                radial-gradient(1px 1px at 90% 75%, #fff, transparent),
+                radial-gradient(1px 1px at 45% 10%, #fff, transparent),
+                radial-gradient(1.5px 1.5px at 15% 55%, #fcd34d, transparent),
+                radial-gradient(1px 1px at 75% 40%, #fff, transparent);
+            opacity: 0.7; animation: twinkle 4s ease-in-out infinite alternate;
+        }
+        @keyframes twinkle { 0% { opacity: 0.35; } 100% { opacity: 0.85; } }
+
+        .globe-wrap {
+            position: relative;
+            width: 150px;
+            height: 150px;
+        }
+        /* Rotating orbital ring around globe */
+        .orbit-ring {
+            position: absolute; inset: -10px;
+            border: 1px dashed rgba(56, 189, 248, 0.35);
+            border-radius: 50%;
+            animation: spinRing 18s linear infinite;
+        }
+        .orbit-ring::before {
+            content: ''; position: absolute; top: -3px; left: 50%; width: 6px; height: 6px;
+            background: var(--warning); border-radius: 50%; box-shadow: 0 0 6px var(--warning);
+            transform: translateX(-50%);
+        }
+        @keyframes spinRing { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+
+        .globe-visual {
+            width: 150px;
+            height: 150px;
+            border-radius: 50%;
+            position: relative;
+            box-shadow: inset -12px -12px 30px rgba(0,0,0,0.85), inset 8px 8px 20px rgba(96,165,250,0.15), 0 0 25px rgba(58, 130, 246, 0.35);
+            cursor: default;
+        }
+        .globe-svg { width: 100%; height: 100%; display: block; }
+
+        .continent-path {
+            fill: #475569;
+            stroke: #1e293b;
+            stroke-width: 0.6;
+            cursor: pointer;
+            transition: fill 0.5s ease, filter 0.5s ease;
+        }
+        .continent-path:hover { fill: #64748b; filter: brightness(1.2); }
+        /* Occupied colony status shifts to bright neon green with subtle pulse */
+        .continent-path.occupied {
+            fill: var(--success);
+            filter: drop-shadow(0 0 4px var(--success));
+            animation: pulseLand 2.2s ease-in-out infinite;
+        }
+        @keyframes pulseLand {
+            0%, 100% { filter: drop-shadow(0 0 3px var(--success)); }
+            50% { filter: drop-shadow(0 0 8px var(--success)); }
+        }
+        .grid-line { stroke: rgba(148, 163, 184, 0.25); fill: none; stroke-width: 0.4; }
+
+        .map-tooltip {
+            position: absolute; z-index: 10; background: #0f172a; border: 1px solid var(--teal);
+            color: var(--text); padding: 6px 10px; border-radius: 6px; font-size: 0.7rem; max-width: 180px;
+            pointer-events: none; opacity: 0; transition: opacity 0.15s ease; box-shadow: 0 4px 12px rgba(0,0,0,0.6);
+            top: 0; left: 50%; transform: translate(-50%, -110%); white-space: normal;
+        }
+        .map-tooltip.show { opacity: 1; }
+        .map-tooltip strong { color: var(--warning); display:block; margin-bottom: 2px; }
+
+        .colony-progress-bar {
+            width: 80%; background: #334155; height: 8px; border-radius: 4px; margin-top: 10px; overflow: hidden;
+        }
+        .colony-progress-fill {
+            height: 100%; width: 0%; background: linear-gradient(to right, var(--primary), var(--success)); transition: 0.4s;
+        }
+
+        .city-status-text { font-size: 1.4rem; font-weight: bold; color: var(--warning); text-shadow: 0 0 10px rgba(245, 158, 11, 0.3); }
+        .live-ticker { font-size: 0.85rem; color: #38bdf8; margin-top: 4px; font-style: italic; }
+
+        .dashboard { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 8px; }
+        .stat-box { background: rgba(0, 0, 0, 0.4); padding: 10px; border-radius: 6px; border-top: 3px solid var(--primary); }
+        .stat-box .title { font-size: 0.7rem; color: #94a3b8; text-transform: uppercase; font-weight: bold; letter-spacing: 0.5px;}
+        .stat-box .value { font-size: 1.15rem; font-weight: bold; margin-top: 2px; }
+        .stat-box .sub { font-size: 0.65rem; color: #cbd5e1; margin-top: 1px; }
+
+        .tabs-container { display: flex; gap: 3px; border-bottom: 2px solid #475569; flex-wrap: wrap; }
+        .tab-btn { background: #334155; color: var(--text); border: none; padding: 8px 12px; cursor: pointer; border-radius: 4px 4px 0 0; font-weight: bold; font-size: 0.8rem; transition: 0.2s; }
+        .tab-btn:hover { background: #475569; }
+        .tab-btn.active { background: var(--primary); }
+
+        .main-layout { display: grid; grid-template-columns: 1fr 2.2fr; gap: 15px; }
+        .left-panel { display: flex; flex-direction: column; gap: 10px; }
+        .btn-generator { width: 100%; height: 110px; background: linear-gradient(135deg, #b45309, #d97706); border: none; border-radius: 8px; color: white; font-size: 1.1rem; font-weight: bold; cursor: pointer; box-shadow: 0 4px 0 #78350f; position: relative; }
+        .btn-generator:active { transform: translateY(4px); box-shadow: none; }
+
+        .policy-box { background: var(--panel-inner); border: 1px solid #334155; border-radius: 8px; padding: 10px; }
+        .slider-ctrl { width: 100%; margin-top: 5px; }
+
+        .content-panel { max-height: 550px; overflow-y: auto; padding-right: 5px; }
+        .panel-tab-content { display: none; flex-direction: column; gap: 8px; }
+        .panel-tab-content.active { display: flex; }
+
+        .game-card { background: #334155; border: 1px solid #475569; border-radius: 8px; padding: 10px; display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+        .card-info { flex: 1; }
+        .card-info strong { color: var(--warning); font-size: 0.9rem; }
+        .card-info p { margin: 2px 0 0 0; font-size: 0.75rem; color: #cbd5e1; }
+        
+        .btn-action { color: white; border: none; padding: 8px 12px; border-radius: 4px; font-weight: bold; cursor: pointer; font-size: 0.75rem; min-width: 100px; text-align: center; }
+        .btn-action:disabled { background: #64748b !important; cursor: not-allowed; opacity: 0.5; }
+       /* Event Overlay */
+        .event-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.85); display: none; justify-content: center; align-items: center; z-index: 999; }
+        .event-modal { background: var(--panel-bg); border: 2px solid var(--danger); padding: 20px; border-radius: 10px; max-width: 500px; width: 90%; text-align: center; box-shadow: 0 0 20px var(--danger); }
+
+        /* ===== Game Over screen ===== */
+        #game-over-overlay {
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+            background: rgba(9, 13, 22, 0.96);
+            z-index: 9999;
+            display: none; /* toggled to flex via JS */
+            justify-content: center; align-items: center;
+            padding: 20px;
+            opacity: 0;
+            transition: opacity 0.6s ease;
+        }
+        #game-over-overlay.show { opacity: 1; }
+        .game-over-box {
+            background: var(--panel-bg);
+            border: 2px solid var(--danger);
+            box-shadow: 0 0 40px rgba(239, 68, 68, 0.5);
+            border-radius: 14px;
+            max-width: 480px; width: 90%;
+            padding: 30px 25px;
+            text-align: center;
+        }
+        .game-over-icon { font-size: 3.5rem; margin-bottom: 10px; }
+        .game-over-title {
+            font-size: 1.6rem; font-weight: bold; color: var(--danger);
+            text-shadow: 0 0 12px rgba(239, 68, 68, 0.6);
+            margin-bottom: 12px; letter-spacing: 1px;
+        }
+        .game-over-reason { color: #cbd5e1; font-size: 0.95rem; line-height: 1.5; margin-bottom: 20px; }
+        .game-over-stats { background: var(--panel-inner); border-radius: 8px; padding: 12px; margin-bottom: 20px; font-size: 0.85rem; color: #94a3b8; text-align: left; }
+        .game-over-stats div { display: flex; justify-content: space-between; padding: 3px 0; }
+        .btn-restart-game {
+            background: linear-gradient(135deg, var(--danger), #b91c1c); color: white; border: none;
+            padding: 14px 36px; font-size: 1.05rem; font-weight: bold; border-radius: 30px;
+            cursor: pointer; box-shadow: 0 5px 15px rgba(239, 68, 68, 0.4); transition: 0.2s;
+        }
+        .btn-restart-game:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(239, 68, 68, 0.55); }
+        .event-options { display: flex; flex-direction: column; gap: 8px; margin-top: 15px; }
+        .btn-option { background: #475569; color: white; border: none; padding: 10px; border-radius: 5px; cursor: pointer; font-weight: bold; }
+        .btn-option:hover { background: var(--primary); }
+
+        .floating-number { position: absolute; color: #fcd34d; font-weight: bold; font-size: 1.1rem; pointer-events: none; animation: riseUp 0.4s ease-out forwards; }
+        @keyframes riseUp { 0% { opacity: 1; transform: translateY(0); } 100% { opacity: 0; transform: translateY(-30px); } }
+
+        .colony-level-badge { background: var(--teal); color: #022c22; font-size: 0.65rem; font-weight: bold; padding: 1px 6px; border-radius: 10px; margin-left: 4px; }
+
+        /* ===== RESPONSIVE: Optimized for responsive standard scaling & mobile (CrazyGames requirement) ===== */
+        @media (max-width: 900px) {
+            .main-layout { grid-template-columns: 1fr; }
+            .central-hub { grid-template-columns: 1fr; text-align: center; }
+            .map-section { margin: 0 auto; }
+            .dashboard { grid-template-columns: repeat(2, 1fr); }
+        }
+        @media (max-width: 520px) {
+            body { padding: 6px; }
+            .game-container { padding: 8px; gap: 8px; }
+            .start-title { font-size: 2rem; }
+            .dashboard { grid-template-columns: repeat(2, 1fr); gap: 6px; }
+            .stat-box .value { font-size: 0.95rem; }
+            .tabs-container { gap: 2px; }
+            .tab-btn { padding: 7px 8px; font-size: 0.7rem; flex: 1 1 auto; }
+            .btn-generator { height: 90px; font-size: 0.95rem; }
+            .content-panel { max-height: 420px; }
+            .game-card { flex-direction: column; align-items: stretch; }
+            .btn-action { width: 100%; min-width: unset; }
+            .globe-wrap, .globe-visual { width: 120px; height: 120px; }
+        }
+
+        /* Loading screen — covers the entire interface until the game is ready */
+        #loading-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            /* Replace the URL below with your own thumbnail image path */
+            background: linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.7)),
+                        url('assets/thumbnail-landscape.png') no-repeat center center;
+            background-size: cover;
+            z-index: 10000; /* Always on top, above the difficulty overlay and start screen */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            transition: opacity 0.5s ease;
+        }
+
+        .loading-content {
+            text-align: center;
+            color: white;
+        }
+
+        .loading-text {
+            font-size: 2rem;
+            letter-spacing: 2px;
+            margin-bottom: 20px;
+            text-shadow: 0 0 10px rgba(0, 255, 255, 0.5);
+        }
+
+        .progress-container {
+            width: 300px;
+            height: 10px;
+            background-color: rgba(255, 255, 255, 0.2);
+            border-radius: 5px;
+            overflow: hidden;
+            margin: 0 auto;
+        }
+
+        .progress-bar {
+            width: 0%;
+            height: 100%;
+            background: linear-gradient(90deg, #00ffcc, #0077ff);
+            box-shadow: 0 0 8px #00ffcc;
+            transition: width 0.1s linear;
+        }
+    </style>
+</head>
+<body>
+
+<!-- Loading screen shown on top of everything else while the game initializes -->
+<div id="loading-screen">
+    <div class="loading-content">
+        <h2 class="loading-text">CIVCLICKER: AGE OF PROGRESS</h2>
+        <div class="progress-container">
+            <div class="progress-bar" id="my-bar"></div>
+        </div>
+        <p style="color: #aaa; margin-top: 10px;">Loading assets...</p>
+    </div>
+</div>
+
+<!-- Game Over screen: shown when population hits 0 or a crisis wipes out the civilization -->
+<div id="game-over-overlay">
+    <div class="game-over-box">
+        <div class="game-over-icon" id="game-over-icon">💀</div>
+        <div class="game-over-title" id="game-over-title">CIVILIZATION COLLAPSED</div>
+        <div class="game-over-reason" id="game-over-reason">Your civilization has fallen.</div>
+        <div class="game-over-stats" id="game-over-stats"></div>
+        <button class="btn-restart-game" onclick="restartAfterGameOver()">🔄 Rebuild Civilization</button>
+    </div>
+</div>
+
+<div id="difficulty-overlay" style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(9, 13, 22, 0.98); z-index: 9999; display: flex; justify-content: center; align-items: center; padding: 20px;">
+    <div style="background: var(--panel-bg); border: 2px solid var(--primary); padding: 30px; border-radius: 12px; max-width: 600px; width: 100%; text-align: center; box-shadow: 0 0 25px rgba(59, 130, 246, 0.3);">
+        <h1 style="color: var(--text); margin-bottom: 5px; font-size: 2rem; letter-spacing: 2px;">🏛️ CivClicker: Age of Progress</h1>
+        <p style="color: var(--teal); font-size: 1.1rem; margin-bottom: 25px;">Select Your Civilization's Path & Difficulty</p>
+
+        <div style="display: flex; flex-direction: column; gap: 15px;">
+            <div onclick="selectDifficulty('easy')" style="background: var(--panel-inner); border: 1px solid var(--success); padding: 15px; border-radius: 8px; cursor: pointer; transition: transform 0.2s, box-shadow 0.2s; text-align: left;" onmouseenter="this.style.transform='scale(1.02)'; this.style.boxShadow='0 0 10px rgba(16, 185, 129, 0.2)'" onmouseleave="this.style.transform='scale(1)'; this.style.boxShadow='none'">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
+                    <span style="font-weight: bold; color: var(--success); font-size: 1.1rem;">✅ EASY MODE</span>
+                    <span style="font-size: 0.8rem; background: rgba(16, 185, 129, 0.2); color: var(--success); padding: 2px 6px; border-radius: 4px;">For Beginners</span>
+                </div>
+                <div style="font-size: 0.85rem; color: #94a3b8; line-height: 1.4;">
+                    • Resources: <span style="color: var(--success);">Gold +40%, Food +40%, Science +30%</span><br>
+                    • Bosses: <span style="color: var(--success);">HP -25%, Damage -30%</span>
+                </div>
+            </div>
+
+            <div onclick="selectDifficulty('normal')" style="background: var(--panel-inner); border: 1px solid var(--primary); padding: 15px; border-radius: 8px; cursor: pointer; transition: transform 0.2s, box-shadow 0.2s; text-align: left;" onmouseenter="this.style.transform='scale(1.02)'; this.style.boxShadow='0 0 10px rgba(59, 130, 246, 0.2)'" onmouseleave="this.style.transform='scale(1)'; this.style.boxShadow='none'">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
+                    <span style="font-weight: bold; color: var(--primary); font-size: 1.1rem;">🔵 NORMAL MODE</span>
+                    <span style="font-size: 0.8rem; background: rgba(59, 130, 246, 0.2); color: var(--primary); padding: 2px 6px; border-radius: 4px;">Standard</span>
+                </div>
+                <div style="font-size: 0.85rem; color: #94a3b8; line-height: 1.4;">
+                    • Default parameters and original core balance.<br>
+                    • Standard Boss stats and normal Raid frequency.
+                </div>
+            </div>
+
+            <div onclick="selectDifficulty('hard')" style="background: var(--panel-inner); border: 1px solid var(--danger); padding: 15px; border-radius: 8px; cursor: pointer; transition: transform 0.2s, box-shadow 0.2s; text-align: left;" onmouseenter="this.style.transform='scale(1.02)'; this.style.boxShadow='0 0 10px rgba(239, 68, 68, 0.2)'" onmouseleave="this.style.transform='scale(1)'; this.style.boxShadow='none'">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
+                    <span style="font-weight: bold; color: var(--danger); font-size: 1.1rem;">🔴 HARD MODE</span>
+                    <span style="font-size: 0.8rem; background: rgba(239, 68, 68, 0.2); color: var(--danger); padding: 2px 6px; border-radius: 4px;">Veteran Challenger</span>
+                </div>
+                <div style="font-size: 0.85rem; color: #94a3b8; line-height: 1.4;">
+                    • Resources: <span style="color: var(--danger);">Gold -25%, Food -25%, Science -20%</span><br>
+                    • Bosses: <span style="color: var(--danger);">HP +60%, Damage +50% (Frequent Raids)</span><br>
+                    • Reward Multiplier: <span style="color: var(--success); font-weight: bold;">+50% Extra Boss Loot & Gems 💎</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<!-- START SCREEN INTRO GAME INTERFACE -->
+<div id="start-screen">
+    <div class="start-title">CivClicker Age of Progress</div>
+    <div class="start-sub">Welcome, Great Ruler. Ten thousand years of human history lie within your hands. Select a type of civilization to establish your realm:</div>
+    <div class="civ-select-container">
+        <div class="civ-card selected" id="civ-trade" onclick="selectCiv('trade')">
+            <h3 style="color:var(--warning); margin:0 0 5px 0;">💰 Merchant Syndicate</h3>
+            <p style="font-size:0.75rem; color:#cbd5e1; margin:0;">Inherent passive: <strong>+15% Gold</strong> generated from all commercial infrastructure.</p>
+        </div>
+        <div class="civ-card" id="civ-war" onclick="selectCiv('war')">
+            <h3 style="color:var(--danger); margin:0 0 5px 0;">⚔️ Militant Empire</h3>
+            <p style="font-size:0.75rem; color:#cbd5e1; margin:0;">Inherent passive: All military units receive a permanent bonus of <strong>+15% Attack Power (ATK)</strong>.</p>
+        </div>
+    </div>
+
+    <div class="start-sub" style="margin-top:14px; font-size:0.7rem; opacity:0.7;">Difficulty: <span id="start-screen-diff-label">Normal ⚖️</span></div>
+
+    <button class="btn-start-game" onclick="startGame()">FOUND EMPIRE 🚀</button>
+</div>
+
+<div class="event-overlay" id="event-overlay">
+    <div class="event-modal" id="event-modal">
+        <h2 id="event-title" style="color: var(--danger); margin-top:0;">💥 HISTORICAL EVENT</h2>
+        <p id="event-desc">Event description...</p>
+        <div class="event-options" id="event-options"></div>
+    </div>
+</div>
+
+<div class="event-overlay" id="notify-overlay">
+    <div class="event-modal" id="notify-modal" style="border-color: var(--teal); box-shadow: 0 0 20px var(--teal);">
+        <h2 id="notify-title" style="color: var(--teal); margin-top:0;">📢 Notice</h2>
+        <p id="notify-desc" style="white-space: pre-line;">Message...</p>
+        <div class="event-options" id="notify-options">
+            <button class="btn-option" id="notify-close-btn">Close</button>
+        </div>
+    </div>
+</div>
+
+<div class="event-overlay" id="boss-battle-overlay">
+    <div class="event-modal" id="boss-battle-modal" style="border-color: var(--danger); box-shadow: 0 0 25px var(--danger); max-width: 480px;">
+        <h2 id="boss-name-txt" style="color: var(--danger); margin-top:0;">👹 Boss</h2>
+        <div style="font-size:0.75rem; color:#94a3b8; margin-bottom:10px;" id="boss-level-txt">Level 1</div>
+
+        <div style="text-align:left; margin-bottom:4px; font-size:0.75rem; display:flex; justify-content:space-between;">
+            <span>💀 Boss HP</span><span id="boss-hp-txt">0 / 0</span>
+        </div>
+        <div style="background:#334155; border-radius:6px; overflow:hidden; height:16px; margin-bottom:14px;">
+            <div id="boss-hp-bar" style="background:var(--danger); height:100%; width:100%; transition: width 0.3s;"></div>
+        </div>
+
+        <div style="text-align:left; margin-bottom:4px; font-size:0.75rem; display:flex; justify-content:space-between;">
+            <span>🛡️ Your Army HP</span><span id="player-hp-txt">0 / 0</span>
+        </div>
+        <div style="background:#334155; border-radius:6px; overflow:hidden; height:16px; margin-bottom:14px;">
+            <div id="player-hp-bar" style="background:var(--success); height:100%; width:100%; transition: width 0.3s;"></div>
+        </div>
+
+        <div id="boss-battle-log" style="font-size:0.75rem; color:#cbd5e1; min-height:20px; margin-bottom:10px;">⚔️ Battle in progress...</div>
+
+        <button class="btn-option" onclick="retreatFromBoss()" style="background:#475569;">🏳️ Retreat</button>
+    </div>
+</div>
+
+<div class="event-overlay" id="boss-defeat-overlay">
+    <div class="event-modal" id="boss-defeat-modal" style="border-color: var(--danger); box-shadow: 0 0 20px var(--danger);">
+        <h2 style="color: var(--danger); margin-top:0;">💀 Defeated</h2>
+        <p style="font-size:0.85rem;">Your army has fallen! Watch an ad to revive 50% of your forces and continue the fight, or retreat and try again later.</p>
+        <div class="event-options">
+            <button class="btn-option" style="background:var(--success)" onclick="reviveFromBossDefeat(this)">❤️ Watch Ad To Revive</button>
+            <button class="btn-option" onclick="giveUpBossFight()">🏳️ Give Up</button>
+        </div>
+    </div>
+</div>
+
+<div class="game-container">
+    <div class="game-header">
+        <div style="font-weight: bold; font-size: 1.1rem; display: flex; align-items: center; gap: 8px;">👑 EMPIRE IMPERIUM <span style="font-size: 0.75rem; background:#475569; padding:2px 6px; border-radius:4px;" id="civ-trait-badge">v15.0 Colonial Edition</span></div>
+        <div style="display: flex; gap: 8px; align-items: center;">
+            <button onclick="manualCloudSave()" style="background:#475569; border:none; color:white; padding:3px 8px; border-radius:4px; font-size:0.7rem; cursor:pointer;">☁ Save Progress</button>
+            <button onclick="manualCloudLoad()" style="background:#475569; border:none; color:white; padding:3px 8px; border-radius:4px; font-size:0.7rem; cursor:pointer;">☁ Load Progress</button>
+            <button onclick="resetGame()" style="background:#475569; border:none; color:white; padding:3px 8px; border-radius:4px; font-size:0.7rem; cursor:pointer;">RESET 🔄</button>
+            <div id="cloudStatus" style="font-size:0.7rem; color:#94a3b8;">Checking account...</div>
+            <div class="era-badge" id="era-display">Era: Stone Age 🗿</div>
+        </div>
+        
+    </div>
+
+    <!-- CENTRAL HUB: INTEGRATED COLONIAL GLOBE MAP AREA IN THE MIDDLE -->
+    <div class="central-hub">
+        <div class="map-section">
+            <div class="starfield"></div>
+            <div class="globe-wrap">
+                <div class="orbit-ring"></div>
+                <div class="globe-visual">
+                    <svg class="globe-svg" viewBox="0 0 150 150" xmlns="http://www.w3.org/2000/svg">
+                        <defs>
+                            <radialGradient id="oceanGrad" cx="35%" cy="30%" r="75%">
+                                <stop offset="0%" stop-color="#1e3a5f"/>
+                                <stop offset="55%" stop-color="#0f2742"/>
+                                <stop offset="100%" stop-color="#06121f"/>
+                            </radialGradient>
+                        </defs>
+                        <circle cx="75" cy="75" r="73" fill="url(#oceanGrad)" stroke="#334155" stroke-width="2"/>
+                        <!-- Globe longitude/latitude grid simulation lines -->
+                        <ellipse class="grid-line" cx="75" cy="75" rx="73" ry="28"/>
+                        <ellipse class="grid-line" cx="75" cy="75" rx="73" ry="52"/>
+                        <ellipse class="grid-line" cx="75" cy="75" rx="28" ry="73"/>
+                        <ellipse class="grid-line" cx="75" cy="75" rx="52" ry="73"/>
+                        <line class="grid-line" x1="2" y1="75" x2="148" y2="75"/>
+                        <line class="grid-line" x1="75" y1="2" x2="75" y2="148"/>
+                        <!-- 5 Continent segments corresponding to 5 Campaigns / Colonies -->
+                        <path class="continent-path" id="geo-0" onclick="showColonyTab(0)"
+                            d="M28,38 C40,28 58,30 62,42 C66,52 56,60 44,58 C32,56 18,50 28,38 Z"/>
+                        <path class="continent-path" id="geo-1" onclick="showColonyTab(1)"
+                            d="M95,90 C112,82 130,90 128,106 C126,122 104,128 92,118 C82,110 82,97 95,90 Z"/>
+                        <path class="continent-path" id="geo-2" onclick="showColonyTab(2)"
+                            d="M104,26 C116,22 126,30 122,42 C118,52 102,52 98,42 C95,34 97,29 104,26 Z"/>
+                        <path class="continent-path" id="geo-3" onclick="showColonyTab(3)"
+                            d="M24,96 C34,90 46,94 46,106 C46,118 32,124 22,116 C14,110 16,101 24,96 Z"/>
+                        <path class="continent-path" id="geo-4" onclick="showColonyTab(4)"
+                            d="M62,64 C70,60 80,64 80,72 C80,80 70,84 62,80 C56,76 56,68 62,64 Z"/>
+                    </svg>
+                </div>
+                <div class="map-tooltip" id="map-tooltip"><strong id="tooltip-title">-</strong><span id="tooltip-desc">-</span></div>
+            </div>
+            <div class="colony-progress-bar">
+                <div class="colony-progress-fill" id="colony-progress-fill"></div>
+            </div>
+            <div style="font-size: 0.75rem; font-weight: bold; margin-top: 5px; color: var(--success);">
+                Conquered: <span id="colony-percent">0%</span> of World Map
+            </div>
+        </div>
+        
+        <div>
+            <div class="city-status-text" id="civ-title">PRIMITIVE TRIBE 🏠</div>
+            <div style="font-size: 0.8rem; color: #a7f3d0; margin-top: 5px;" id="current-location-txt">
+                📍 Current Location: <strong>Primitive Capital (Coordinates 0,0)</strong>
+            </div>
+            <div class="live-ticker" id="live-ticker">Launch expeditions to conquer new regions and expand territory! (Click on continents for details)</div>
+            <div id="event-log-box" style="margin-top:8px; font-size:0.68rem; color:#94a3b8; max-height:70px; overflow-y:auto; border-top:1px solid #1e293b; padding-top:5px;"></div>
+        </div>
+    </div>
+
+    <div class="dashboard">
+        <div class="stat-box" style="border-top-color: var(--success)">
+            <div class="title">National Budget</div>
+            <div class="value" id="gold-txt">0 💰</div>
+            <div class="sub">Net: <span id="gps-txt">+0</span>/s</div>
+        </div>
+        <div class="stat-box" style="border-top-color: var(--orange)">
+            <div class="title">Food Granary</div>
+            <div class="value" id="food-txt">0 🌾</div>
+            <div class="sub">Net: <span id="fps-txt">+0</span>/s</div>
+        </div>
+        <div class="stat-box" style="border-top-color: var(--teal)">
+            <div class="title">Total Population</div>
+            <div class="value" id="pop-txt">0/0 👨‍👩‍👦</div>
+            <div class="sub">Idle workforce: <span id="pop-free-txt">0</span></div>
+        </div>
+        <div class="stat-box" style="border-top-color: var(--warning)">
+            <div class="title">Happiness Level</div>
+            <div class="value" id="happy-txt">100% 😊</div>
+            <div class="sub">Efficiency: <span id="happy-eff-txt">100%</span></div>
+        </div>
+        <div class="stat-box" style="border-top-color: #60a5fa">
+            <div class="title">Military (DEF | ATK)</div>
+            <div class="value" id="mil-txt">0 | 0 🛡️</div>
+            <div class="sub" id="intel-txt">Secure</div>
+        </div>
+        <div class="stat-box" style="border-top-color: var(--purple)">
+            <div class="title">Science & Faith</div>
+            <div class="value" id="scifaith-txt">🔬0 | ⛪0</div>
+            <div class="sub">Speed: +<span id="sps-txt">0</span> | +<span id="faith-speed-txt">0</span></div>
+        </div>
+        <div class="stat-box" style="border-top-color: var(--danger)">
+            <div class="title">Boss Rewards</div>
+            <div class="value" id="gems-txt">💎0 | 🧩0</div>
+            <div class="sub">Gems | Wonder Fragments</div>
+        </div>
+    </div>
+
+    <div class="tabs-container">
+        <button class="tab-btn active" onclick="switchTab(event, 'economy-tab')">🏗️ Infrastructure</button>
+        <button class="tab-btn" onclick="switchTab(event, 'military-tab')">⚔️ Military</button>
+        <button class="tab-btn" style="background: #03484d;" onclick="switchTab(event, 'campaign-tab')">🗺️ Expedition</button>
+        <button class="tab-btn" style="background: #065f46;" onclick="switchTab(event, 'colony-tab')">🏝️ Colonies</button>
+        <button class="tab-btn" style="background: #1e3a8a;" onclick="switchTab(event, 'quest-tab')">📜 Quests</button>
+        <button class="tab-btn" style="background: #78350f;" onclick="switchTab(event, 'trophy-tab')">🏆 Achievements</button>
+        <button class="tab-btn" style="background: #581c87;" onclick="switchTab(event, 'tech-tab')">🔬 Technology</button>
+        <button class="tab-btn" style="background: #4c1d95;" onclick="switchTab(event, 'faith-tab')">⛪ Altar</button>
+        <button class="tab-btn" style="background: #9a3412;" onclick="switchTab(event, 'wonder-tab')">🗿 Wonders</button>
+        <button class="tab-btn" style="background: #312e81;" onclick="switchTab(event, 'evo-tab')">🧬 Evolution</button>
+        <button class="tab-btn" style="background: #b45309;" onclick="switchTab(event, 'boosts-tab')">🎁 Boosts</button>
+    </div>
+
+    <div class="main-layout">
+        <div class="left-panel">
+            <button class="btn-generator" id="click-btn">🏛️ GATHER RESOURCES<br><span id="click-eff" style="font-size:0.75rem; font-weight:normal;">(+1 Gold)</span></button>
+            
+            <div class="policy-box">
+                <div style="font-size:0.8rem; font-weight:bold; color:var(--teal)">📜 NATIONAL TAX BUREAU</div>
+                <div style="font-size:0.75rem; margin-top:3px; display:flex; justify-content:space-between;">
+                    <span>Tax Rate: <strong id="tax-val-txt">10%</strong></span>
+                    <span>Happiness Impact: <strong id="tax-happy-txt">-15%</strong></span>
+                </div>
+                <input type="range" min="0" max="50" value="10" class="slider-ctrl" id="tax-slider" oninput="changeTax(this.value)">
+            </div>
+        </div>
+
+        <div class="content-panel">
+            <div id="economy-tab" class="panel-tab-content active"></div>
+            <div id="military-tab" class="panel-tab-content"></div>
+            <div id="campaign-tab" class="panel-tab-content"><div id="campaign-list"></div></div>
+            <div id="colony-tab" class="panel-tab-content"><div id="colony-list"></div></div>
+            <div id="quest-tab" class="panel-tab-content"></div>
+            <div id="trophy-tab" class="panel-tab-content"></div>
+            <div id="tech-tab" class="panel-tab-content"><div id="tech-list"></div></div>
+            <div id="faith-tab" class="panel-tab-content"></div>
+            <div id="wonder-tab" class="panel-tab-content"></div>
+            <div id="evo-tab" class="panel-tab-content">
+                <div style="background:rgba(139, 92, 246, 0.15); border:1px solid var(--purple); padding:15px; border-radius:8px; text-align:center;">
+                    <h3 style="margin-top:0; color:#c084fc;">🧬 Historical Evolution Council</h3>
+                    <p id="evo-requirement-txt">Requirements...</p>
+                    <button class="btn-action" style="background:var(--purple); padding:10px 20px; font-size:0.9rem;" id="evo-btn" onclick="evolveEra()">EVOLVE EMPIRE 🚀</button>
+                </div>
+                <div style="background:rgba(239, 68, 68, 0.12); border:1px solid var(--danger); padding:15px; border-radius:8px; text-align:center; margin-top:12px;">
+                    <h3 style="margin-top:0; color:var(--danger);">👹 Era Boss Challenge (Optional)</h3>
+                    <p id="boss-requirement-txt" style="font-size:0.8rem; color:#cbd5e1;">Requirements...</p>
+                    <button class="btn-action" style="background:var(--danger); padding:10px 20px; font-size:0.9rem;" id="boss-fight-btn" onclick="startEraBossFight()">FIGHT ERA BOSS 👹</button>
+                </div>
+            </div>
+            <div id="boosts-tab" class="panel-tab-content">
+                <div style="background:rgba(245, 158, 11, 0.12); border:1px solid var(--warning); padding:15px; border-radius:8px; text-align:center; margin-bottom:10px;">
+                    <h3 style="margin-top:0; color:var(--warning);">🎁 Sponsored Boosts</h3>
+                    <p style="font-size:0.8rem; color:#94a3b8; margin-top:-5px;">Watch a short ad to claim bonus rewards for your empire.</p>
+                </div>
+                <div style="display:flex; flex-direction:column; gap:10px;">
+                    <button class="btn-action" style="background:#f59e0b" onclick="watchGoldAd(this)">🎁 Watch Ad (+5000 Gold)</button>
+                    <button class="btn-action" style="background:#3b82f6" onclick="activateProductionBoost(this)">⚡ x5 Production (60s)</button>
+                    <button class="btn-action" style="background:#8b5cf6" onclick="speedUpConstruction(this)">🚀 Speed Up (+20,000 Gold, +500 🔬)</button>
+                    <button class="btn-action" style="background:#10b981" onclick="claimResourcePack(this)">🎁 Claim Resource Pack</button>
+                    <button class="btn-action" style="background:#10b981" onclick="claimDoubleReward(3000,150,this)">🎁 Double Reward</button>
+                    <button class="btn-option" onclick="reviveEmpire(this)">❤️ Watch Ad To Revive</button>
+                </div>
+
+                <div style="background:rgba(139, 92, 246, 0.12); border:1px solid var(--purple); padding:15px; border-radius:8px; text-align:center; margin-top:16px; margin-bottom:10px;">
+                    <h3 style="margin-top:0; color:var(--purple);">💎 Gems Shop</h3>
+                    <p style="font-size:0.8rem; color:#94a3b8; margin-top:-5px;">Spend Gems earned from Boss battles on permanent, saved upgrades.</p>
+                </div>
+                <div style="display:flex; flex-direction:column; gap:10px;">
+                    <div style="background:var(--panel-bg); border:1px solid #334155; border-radius:8px; padding:12px; text-align:left;">
+                        <strong>🌟 Eternal Radiance</strong>
+                        <p style="font-size:0.75rem; color:#cbd5e1; margin:4px 0;">Permanently increases Gold, Food & Science production. Current: <span id="prod-mult-txt">+0%</span></p>
+                        <button class="btn-action" style="background:var(--purple); width:100%;" id="buy-prod-boost-btn" onclick="buyPermanentProdBoost()">Buy +20% (Cost: <span id="prod-mult-cost">20</span> 💎)</button>
+                    </div>
+                    <div style="background:var(--panel-bg); border:1px solid #334155; border-radius:8px; padding:12px; text-align:left;">
+                        <strong>⚔️ Eternal Strength</strong>
+                        <p style="font-size:0.75rem; color:#cbd5e1; margin:4px 0;">Permanently increases total Attack Power (ATK). Current: <span id="atk-mult-txt">+0%</span></p>
+                        <button class="btn-action" style="background:var(--danger); width:100%;" id="buy-atk-boost-btn" onclick="buyPermanentAtkBoost()">Buy +20% (Cost: <span id="atk-mult-cost">20</span> 💎)</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+
+    // ==========================================
+    // Compact Number Formatter (prevents layout
+    // overflow once resources reach millions/billions)
+    // ==========================================
+
+    function fmtNum(n) {
+        n = Math.floor(n);
+        const sign = n < 0 ? "-" : "";
+        n = Math.abs(n);
+        if (n < 1000) return sign + n.toLocaleString();
+        const units = [
+            { v: 1e15, s: "Q" },
+            { v: 1e12, s: "T" },
+            { v: 1e9, s: "B" },
+            { v: 1e6, s: "M" },
+            { v: 1e3, s: "K" }
+        ];
+        for (const u of units) {
+            if (n >= u.v) {
+                return sign + (n / u.v).toFixed(2).replace(/\.?0+$/, "") + u.s;
+            }
+        }
+        return sign + n.toLocaleString();
+    }
+
+    // ==========================================
+    // Custom Notification / Confirm UI
+    // (Replaces browser alert() / confirm() which
+    // can freeze the SDK/webview when embedded in
+    // the CrazyGames iframe on mobile/app)
+    // ==========================================
+
+    function showNotification(message, title) {
+
+        const overlay = document.getElementById('notify-overlay');
+        const titleEl = document.getElementById('notify-title');
+        const descEl = document.getElementById('notify-desc');
+        const optionsEl = document.getElementById('notify-options');
+
+        titleEl.innerText = title || '📢 Notice';
+        descEl.innerText = message;
+
+        optionsEl.innerHTML = '';
+        const closeBtn = document.createElement('button');
+        closeBtn.className = 'btn-option';
+        closeBtn.innerText = 'Close';
+        closeBtn.onclick = () => { overlay.style.display = 'none'; };
+        optionsEl.appendChild(closeBtn);
+
+        overlay.style.display = 'flex';
+
+    }
+
+    function showConfirmDialog(message, onConfirm, onCancel) {
+
+        const overlay = document.getElementById('notify-overlay');
+        const titleEl = document.getElementById('notify-title');
+        const descEl = document.getElementById('notify-desc');
+        const optionsEl = document.getElementById('notify-options');
+
+        titleEl.innerText = '⚠️ Confirm';
+        descEl.innerText = message;
+
+        optionsEl.innerHTML = '';
+
+        const yesBtn = document.createElement('button');
+        yesBtn.className = 'btn-option';
+        yesBtn.style.background = 'var(--danger)';
+        yesBtn.innerText = 'Confirm';
+        yesBtn.onclick = () => { overlay.style.display = 'none'; onConfirm?.(); };
+
+        const noBtn = document.createElement('button');
+        noBtn.className = 'btn-option';
+        noBtn.innerText = 'Cancel';
+        noBtn.onclick = () => { overlay.style.display = 'none'; onCancel?.(); };
+
+        optionsEl.appendChild(yesBtn);
+        optionsEl.appendChild(noBtn);
+
+        overlay.style.display = 'flex';
+
+    }
+
+    const AudioFX = {
+        ctx: null,
+        init() { if (!this.ctx) this.ctx = new (window.AudioContext || window.webkitAudioContext)(); },
+        play(type) {
+            this.init(); if (!this.ctx) return;
+            let osc = this.ctx.createOscillator(); let gain = this.ctx.createGain();
+            osc.connect(gain); gain.connect(this.ctx.destination); let now = this.ctx.currentTime;
+            if (type === 'click') {
+                osc.type = 'sine'; osc.frequency.setValueAtTime(550, now); gain.gain.setValueAtTime(0.04, now);
+                gain.gain.exponentialRampToValueAtTime(0.001, now + 0.05); osc.start(now); osc.stop(now + 0.05);
+            } else if (type === 'buy') {
+                osc.type = 'triangle'; osc.frequency.setValueAtTime(440, now); osc.frequency.setValueAtTime(880, now + 0.08);
+                gain.gain.setValueAtTime(0.06, now); gain.gain.exponentialRampToValueAtTime(0.001, now + 0.12);
+                osc.start(now); osc.stop(now + 0.12);
+            } else if (type === 'event') {
+                osc.type = 'sawtooth'; osc.frequency.setValueAtTime(220, now); osc.frequency.linearRampToValueAtTime(110, now + 0.2);
+                gain.gain.setValueAtTime(0.1, now); gain.gain.exponentialRampToValueAtTime(0.001, now + 0.2);
+                osc.start(now); osc.stop(now + 0.2);
+            }
+        },
+        // Fully silences audio during ad playback: suspends the WebAudio
+        // context AND forces volume=0 on any <audio>/<video> tags, since
+        // ctx.suspend() alone doesn't reliably kill looping sources on
+        // some iOS Safari versions.
+        setMuted(muted) {
+            try {
+                if (muted) {
+                    if (this.ctx && this.ctx.state === 'running') this.ctx.suspend();
+                } else {
+                    if (this.ctx && this.ctx.state === 'suspended') this.ctx.resume();
+                }
+            } catch (e) {}
+
+            document.querySelectorAll('audio, video').forEach(el => {
+                el.volume = muted ? 0 : 1;
+                if (muted) { try { el.pause(); } catch(e){} }
+            });
+        }
+    };
+
+    // Correctly unlock AudioContext in a direct interaction handler (Safari/iOS requirement for CrazyGames)
+    document.addEventListener('touchend', () => {
+        if (AudioFX.ctx && AudioFX.ctx.state === 'suspended') AudioFX.ctx.resume();
+    });
+
+    // Prevent background scrolling via space/arrow keys within embed iframe layouts
+    window.addEventListener('keydown', (e) => {
+        if (['Space', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.code)) {
+            e.preventDefault();
+        }
+    }, { passive: false });
+
+    // Safe wrapper for CrazyGames SDK execution logic
+    const CG = {
+        ready: false,
+        async init() {
+            try {
+                if (window.CrazyGames && window.CrazyGames.SDK) {
+                    // The SDK object being present is NOT enough — CrazyGames
+                    // requires this async handshake before ANY other SDK call
+                    // (ads, user, data) is usable. Skipping it causes every
+                    // later call to throw "CrazySDK is not initialized yet."
+                    await window.CrazyGames.SDK.init();
+                    this.ready = true;
+                    window.CrazyGames?.SDK?.game?.sdkGameLoadingStart?.();
+                }
+            } catch(e) {
+                console.warn("CrazyGames SDK init failed (likely running outside crazygames.com embed):", e);
+                this.ready = false;
+            }
+        },
+        loadingStop() { try { if(this.ready) window.CrazyGames.SDK.game.sdkGameLoadingStop(); } catch(e) {} },
+        gameplayStart() { try { if(this.ready) window.CrazyGames.SDK.game.gameplayStart(); } catch(e) {} },
+        gameplayStop() { try { if(this.ready) window.CrazyGames.SDK.game.gameplayStop(); } catch(e) {} },
+        happytime() { try { if(this.ready) window.CrazyGames.SDK.game.happytime(); } catch(e) {} }
+    };
+    const CG_INIT_PROMISE = CG.init(); // kicked off immediately, awaited later before any cloud calls
+
+    // ==========================================
+    // CrazyGames Advertisement Manager
+    // ==========================================
+
+    const AdsManager = {
+
+        productionBoost: false,
+        productionMultiplier: 1,
+        productionEndTime: 0,
+
+        lastMidrollTime: 0,
+        midrollCooldown: 120000, // minimum 120s between midroll ads
+
+        async showRewardedAd(rewardCallback) {
+
+            if (!CG.ready) {
+
+                rewardCallback?.();
+                return;
+
+            }
+
+            try {
+
+                window.CrazyGames.SDK.ad.requestAd("rewarded", {
+
+                    adStarted: () => {
+
+                        console.log("Rewarded Ad Started");
+
+                        CG.gameplayStop();
+                        AudioFX.setMuted(true);
+
+                    },
+
+                    adFinished: () => {
+
+                        console.log("Rewarded Ad Finished");
+
+                        CG.gameplayStart();
+                        AudioFX.setMuted(false);
+
+                        rewardCallback?.();
+
+                    },
+
+                    adError: (error) => {
+
+                        console.warn(error);
+
+                        CG.gameplayStart();
+                        AudioFX.setMuted(false);
+
+                    }
+
+                });
+
+            }
+            catch (err) {
+
+                console.error(err);
+
+                rewardCallback?.();
+
+            }
+
+        },
+
+        async showMidroll() {
+
+            if (!CG.ready) return;
+
+            const now = Date.now();
+
+            if (now - this.lastMidrollTime < this.midrollCooldown) {
+                console.log("Midroll skipped: cooldown active.");
+                return;
+            }
+
+            this.lastMidrollTime = now;
+
+            try {
+
+                window.CrazyGames.SDK.ad.requestAd("midgame", {
+
+                    adStarted: () => {
+
+                        CG.gameplayStop();
+                        AudioFX.setMuted(true);
+
+                    },
+
+                    adFinished: () => {
+
+                        CG.gameplayStart();
+                        AudioFX.setMuted(false);
+
+                    },
+
+                    adError: () => {
+
+                        CG.gameplayStart();
+                        AudioFX.setMuted(false);
+
+                    }
+
+                });
+
+            }
+            catch(e){
+
+                console.error(e);
+
+            }
+
+        }
+
+    };
+
+    // ===============================
+    // Cloud Save Manager
+    // ===============================
+
+    const SAVE_KEY = "civ_grand_v15";
+
+    const CloudManager = {
+
+        autoSyncInterval: 60000, // 60 seconds
+
+        async isLoggedIn() {
+            try {
+                if (!window.CrazyGames || !window.CrazyGames.SDK) return false;
+                if (!CG.ready) return false; // SDK handshake hasn't completed (or failed) — treat as logged out, no point calling it
+
+                return await window.CrazyGames.SDK.user.isUserLoggedIn();
+
+            } catch (e) {
+                console.warn("Login check failed.", e);
+                return false;
+            }
+        },
+
+        async save(gameData) {
+
+            try {
+
+                localStorage.setItem(SAVE_KEY, JSON.stringify(gameData));
+
+                const loggedIn = await this.isLoggedIn();
+
+                if (!loggedIn) {
+                    console.log("Local Save Complete");
+                    return;
+                }
+
+                await window.CrazyGames.SDK.data.setItem(
+                    SAVE_KEY,
+                    JSON.stringify(gameData)
+                );
+
+                console.log("Cloud Save Complete");
+
+            } catch (err) {
+
+                console.error("Cloud Save Failed", err);
+
+            }
+
+        },
+
+        async load() {
+
+            try {
+
+                const loggedIn = await this.isLoggedIn();
+
+                if (loggedIn) {
+
+                    const cloudData =
+                        await window.CrazyGames.SDK.data.getItem(SAVE_KEY);
+
+                    if (cloudData) {
+
+                        console.log("Cloud Save Loaded");
+
+                        return JSON.parse(cloudData);
+
+                    }
+
+                }
+
+            } catch (err) {
+
+                console.warn("Cloud Load Failed");
+
+            }
+
+            const local = localStorage.getItem(SAVE_KEY);
+
+            if (local) {
+
+                console.log("Local Save Loaded");
+
+                return JSON.parse(local);
+
+            }
+
+            return null;
+
+        }
+
+    };
+
+    const defaultGameState = {
+        gold: 200, food: 80, population: 5, techPoints: 0, faith: 0,
+        taxRate: 10, currentEra: 0, happiness: 100, selectedCiv: 'trade',
+        campaignsWon: [false, false, false, false, false], 
+        colonyLevels: [0, 0, 0, 0, 0], 
+        raidCount: 0, 
+        eventLog: [], 
+        lastSaveTime: Date.now(),
+        hasStarted: false,
+        difficulty: 'normal',
+        difficultyChosen: false,
+        bossLevels: [0, 0, 0, 0, 0],
+        gems: 0,
+        wonderFragments: 0,
+        permanentProdMultiplier: 1.0,
+        permanentAtkMultiplier: 1.0,
+        infrastructure: {
+            house: { count: 1, cost: 15, name: "Clay Hut 🏠", desc: "+5 Population Limit.", era: 0, popMax: 5, foodInc: 0, goldInc: 0, happyInc: 0 },
+            farm: { count: 0, cost: 30, name: "Dry Rice Field 🌾", desc: "+1.5 Food/s.", era: 0, popMax: 0, foodInc: 1.5, goldInc: 0, happyInc: 0 },
+            caveStore: { count: 0, cost: 45, name: "Storage Cave 📦", desc: "+0.5 Food/s, +0.5 Gold/s.", era: 0, popMax: 0, foodInc: 0.5, goldInc: 0.5, happyInc: 0 },
+            market: { count: 0, cost: 60, name: "Stone Market 💰", desc: "+2.0 Gold/s.", era: 0, popMax: 0, foodInc: 0, goldInc: 2, happyInc: 0 },
+            well: { count: 0, cost: 90, name: "Community Well 💧", desc: "+0.4% Global Happiness (stacks).", era: 0, popMax: 0, foodInc: 0, goldInc: 0, happyInc: 0.4 },
+            granary: { count: 0, cost: 120, name: "Tribal Granary 🌾", desc: "+8 Population Limit, +1.0 Food/s.", era: 0, popMax: 8, foodInc: 1.0, goldInc: 0, happyInc: 0 },
+            manor: { count: 0, cost: 250, name: "Feudal Manor 🏰", desc: "+15 Population Limit.", era: 1, popMax: 15, foodInc: 0, goldInc: 0, happyInc: 0 },
+            mill: { count: 0, cost: 400, name: "Medieval Windmill 🌾", desc: "+6.0 Food/s.", era: 1, popMax: 0, foodInc: 6, goldInc: 0, happyInc: 0 },
+            guild: { count: 0, cost: 650, name: "Merchant Guild 💰", desc: "+9.0 Gold/s.", era: 1, popMax: 0, foodInc: 0, goldInc: 9, happyInc: 0 },
+            tavern: { count: 0, cost: 900, name: "Traveler Tavern 🍺", desc: "+15.0 Gold/s.", era: 1, popMax: 0, foodInc: 0, goldInc: 15, happyInc: 0 },
+            chapel: { count: 0, cost: 1100, name: "Village Chapel ⛪", desc: "+0.6% Global Happiness (stacks).", era: 1, popMax: 0, foodInc: 0, goldInc: 0, happyInc: 0.6 },
+            treasury: { count: 0, cost: 1500, name: "Royal Treasury 🏦", desc: "+22 Population Limit, +20.0 Gold/s.", era: 1, popMax: 22, foodInc: 0, goldInc: 20, happyInc: 0 },
+            apartment: { count: 0, cost: 1800, name: "Urban Tenement 🏢", desc: "+50 Population Limit.", era: 2, popMax: 50, foodInc: 0, goldInc: 0, happyInc: 0 },
+            factory: { count: 0, cost: 2500, name: "Steam Factory ⚙️", desc: "+35.0 Gold/s.", era: 2, popMax: 0, foodInc: 0, goldInc: 35, happyInc: 0 },
+            plantation: { count: 0, cost: 3200, name: "Mechanized Plantation 🚜", desc: "+28.0 Food/s.", era: 2, popMax: 0, foodInc: 28, goldInc: 0, happyInc: 0 },
+            railway: { count: 0, cost: 5000, name: "Steam Train Station 🚂", desc: "+70.0 Gold/s.", era: 2, popMax: 0, foodInc: 0, goldInc: 70, happyInc: 0 },
+            park: { count: 0, cost: 6000, name: "Metropolitan Park 🌳", desc: "+0.8% Global Happiness (stacks).", era: 2, popMax: 0, foodInc: 0, goldInc: 0, happyInc: 0.8 },
+            stockExchange: { count: 0, cost: 8000, name: "Stock Exchange 📈", desc: "+90 Population Limit, +130.0 Gold/s.", era: 2, popMax: 90, foodInc: 0, goldInc: 130, happyInc: 0 },
+            cyberHouse: { count: 0, cost: 12000, name: "Smart Cyber Apartment 🏙️", desc: "+150 Population Limit.", era: 3, popMax: 150, foodInc: 0, goldInc: 0, happyInc: 0 },
+            hydroFarm: { count: 0, cost: 18000, name: "High-Speed Hydro Farm 🥦", desc: "+120 Food/s.", era: 3, popMax: 0, foodInc: 120, goldInc: 0, happyInc: 0 },
+            techHub: { count: 0, cost: 26000, name: "Digital Tech Corp 🌐", desc: "+190 Gold/s.", era: 3, popMax: 0, foodInc: 0, goldInc: 190, happyInc: 0 },
+            serverFarm: { count: 0, cost: 40000, name: "Cloud Data Center 💾", desc: "+350 Gold/s.", era: 3, popMax: 0, foodInc: 0, goldInc: 350, happyInc: 0 },
+            vrCenter: { count: 0, cost: 55000, name: "VR Entertainment Center 🎮", desc: "+1.2% Global Happiness (stacks).", era: 3, popMax: 0, foodInc: 0, goldInc: 0, happyInc: 1.2 },
+            aiMegacorp: { count: 0, cost: 75000, name: "Artificial Intelligence Megacorp 🤖", desc: "+280 Population Limit, +520.0 Gold/s.", era: 3, popMax: 280, foodInc: 0, goldInc: 520, happyInc: 0 },
+            quantumNode: { count: 0, cost: 150000, name: "Space Cocoon Station 🌌", desc: "+650 Population Limit.", era: 4, popMax: 650, foodInc: 0, goldInc: 0, happyInc: 0 },
+            matterSynth: { count: 0, cost: 240000, name: "Quantum Matter Synthesizer 🧪", desc: "+900 Food/s.", era: 4, popMax: 0, foodInc: 900, goldInc: 0, happyInc: 0 },
+            dysonSphere: { count: 0, cost: 480000, name: "Dyson Sphere Grid 🌌", desc: "+2,200 Gold/s.", era: 4, popMax: 0, foodInc: 0, goldInc: 2200, happyInc: 0 },
+            starGate: { count: 0, cost: 900000, name: "Interstellar Trade Gate ☄️", desc: "+5,500 Gold/s.", era: 4, popMax: 0, foodInc: 0, goldInc: 5500, happyInc: 0 },
+            pleasureDome: { count: 0, cost: 1300000, name: "Quantum Pleasure Dome 🎆", desc: "+2.5% Global Happiness (stacks).", era: 4, popMax: 0, foodInc: 0, goldInc: 0, happyInc: 2.5 },
+            megaForge: { count: 0, cost: 2200000, name: "Galactic Mega Forge 🌠", desc: "+1200 Population Limit, +9000.0 Gold/s.", era: 4, popMax: 1200, foodInc: 0, goldInc: 9000, happyInc: 0 }
+        },
+        military: {
+            barricade: { count: 0, cost: 20, name: "Wooden Spike Wall 🌳", def: 5, atk: 0, popReq: 0, era: 0 },
+            warrior: { count: 0, cost: 40, name: "Stone Axe Warrior ⚔️", def: 2, atk: 7, popReq: 1, era: 0 },
+            slinger: { count: 0, cost: 65, name: "Stone Slinger Squad 🎯", def: 1, atk: 12, popReq: 1, era: 0 },
+            castle: { count: 0, cost: 300, name: "Fortified Castle 🏯", def: 50, atk: 0, popReq: 0, era: 1 },
+            knight: { count: 0, cost: 450, name: "Armored Knight ⚔️", def: 15, atk: 40, popReq: 1, era: 1 },
+            crossbow: { count: 0, cost: 600, name: "Repeating Crossbowman 🏹", def: 5, atk: 65, popReq: 1, era: 1 },
+            trebuchet: { count: 0, cost: 1000, name: "Expeditionary Trebuchet ☄️", def: 0, atk: 150, popReq: 2, era: 1 },
+            bunker: { count: 0, cost: 2200, name: "Reinforced Concrete Bunker 🛡️", def: 280, atk: 0, popReq: 0, era: 2 },
+            rifleman: { count: 0, cost: 3200, name: "Rifle Infantry 🔫", def: 65, atk: 190, popReq: 1, era: 2 },
+            artillery: { count: 0, cost: 5500, name: "Anti-Air Artillery Battery 💥", def: 20, atk: 480, popReq: 2, era: 2 },
+            dreadnought: { count: 0, cost: 9000, name: "Steam Dreadnought Battleship 🚢", def: 200, atk: 950, popReq: 3, era: 2 },
+            shieldGen: { count: 0, cost: 22000, name: "Plasma Energy Shield 🔮", def: 2000, atk: 0, popReq: 0, era: 3 },
+            gundam: { count: 0, cost: 35000, name: "Heavy-Mech Battle Exo 🤖", def: 450, atk: 1300, popReq: 2, era: 3 },
+            droneSwarm: { count: 0, cost: 50000, name: "Autonomous Drone Swarm 🛸", def: 100, atk: 2200, popReq: 1, era: 3 },
+            plasmaTank: { count: 0, cost: 85000, name: "Plasma Magnetic Tank ⚡", def: 800, atk: 4000, popReq: 2, era: 3 },
+            dimensionGate: { count: 0, cost: 320000, name: "Dimensional Citadel 🌀", def: 16000, atk: 0, popReq: 0, era: 4 },
+            quantumTitan: { count: 0, cost: 550000, name: "Titan Star Destroyer 🌌", def: 3500, atk: 13500, popReq: 3, era: 4 },
+            starDestroyer: { count: 0, cost: 900000, name: "Interstellar Fleet Cruiser 🚀", def: 8000, atk: 32000, popReq: 4, era: 4 },
+            singularityMech: { count: 0, cost: 2000000, name: "Singularity Core Mech 🔮", def: 25000, atk: 99000, popReq: 5, era: 4 }
+        },
+        techs: {
+            plow: { bought: false, cost: 15, name: "Plow Technology 🚜", desc: "+20% Food production.", era: 0 },
+            currency: { bought: false, cost: 40, name: "Coin Minting 💰", desc: "+15% Gold production.", era: 0 },
+            ironWorking: { bought: false, cost: 130, name: "Iron Forging ⚔️", desc: "+25% Attack Power (ATK) for all forces.", era: 1 },
+            theology: { bought: false, cost: 250, name: "Theological Doctrine ⛪", desc: "+30% Faith generation.", era: 1 },
+            steamEngine: { bought: false, cost: 500, name: "Steam Engine 🚂", desc: "+35% Factory gold yield.", era: 2 },
+            electricity: { bought: false, cost: 900, name: "Power Grid Network ⚡", desc: "+20% Global Infrastructure Gold yield.", era: 2 },
+            automation: { bought: false, cost: 2200, name: "AI Automation ⚙️", desc: "Reduces military workforce needs by 50%.", era: 3 },
+            nanoTech: { bought: false, cost: 4500, name: "Nanotechnology 🧬", desc: "+40% Hydro Farm Food production.", era: 3 },
+            singularity: { bought: false, cost: 16000, name: "Quantum Singularity Core 🔮", desc: "Infinite Food! Citizens no longer consume provisions.", era: 4 },
+            warpDrive: { bought: false, cost: 40000, name: "Warp Space Drive 🌌", desc: "+50% ATK for cosmic warships.", era: 4 }
+        },
+        faiths: {
+            shaman: { count: 0, cost: 50, name: "Shaman Hut 🌌", science: 0.2, faith: 0.5, era: 0 },
+            monastery: { count: 0, cost: 520, name: "Ancient Monastery ⛪", science: 1.5, faith: 4.5, era: 1 },
+            university: { count: 0, cost: 4200, name: "Comprehensive University 🏫", science: 13.0, faith: 2.0, era: 2 },
+            quantumLab: { count: 0, cost: 36000, name: "Quantum Laboratory 🔬", science: 95.0, faith: 10.0, era: 3 },
+            cosmicShrine: { count: 0, cost: 420000, name: "Supreme Cosmic Altar 🌟", science: 850.0, faith: 850.0, era: 4 }
+        },
+        wonders: {
+            pyramid: { built: false, cost: 1000, name: "The Great Pyramid 🗿", desc: "+10% Permanent Global Happiness.", era: 0 },
+            notredame: { built: false, cost: 8500, name: "Notre-Dame Cathedral ⛪", desc: "+25% Global Faith generation.", era: 1 },
+            eiffel: { built: false, cost: 65000, name: "Magnificent Eiffel Tower 🗼", desc: "+20% Total Fiscal Revenue.", era: 2 },
+            hadron: { built: false, cost: 420000, name: "Large Hadron Collider 🌀", desc: "+30% Science accumulation rate.", era: 3 },
+            multiverseCore: { built: false, cost: 5500000, name: "Multiverse Engine Core 🌌", desc: "Ultimate Victory! Achieve eternal cosmic ascension.", era: 4 }
+        },
+        quests: {
+            q1: { done: false, name: "🌾 Damming the Rivers", desc: "Own at least 3 Dry Rice Fields.", targetType: "infra", targetKey: "farm", targetCount: 3, rewardGold: 200, rewardTech: 5 },
+            q2: { done: false, name: "⚔️ Form the Vanguard", desc: "Successfully recruit 5 Stone Axe Warriors.", targetType: "mil", targetKey: "warrior", targetCount: 5, rewardGold: 400, rewardTech: 10 },
+            q3: { done: false, name: "🏰 Establish the Cartel", desc: "Own 4 Merchant Guilds (Era 1).", targetType: "infra", targetKey: "guild", targetCount: 4, rewardGold: 2500, rewardTech: 60 },
+            q4: { done: false, name: "🔫 Modernize the Army", desc: "Recruit 8 Rifle Infantry units (Era 2).", targetType: "mil", targetKey: "rifleman", targetCount: 8, rewardGold: 15000, rewardTech: 300 },
+            q5: { done: false, name: "💾 Global Database Infrastructure", desc: "Build 5 Cloud Data Centers (Era 3).", targetType: "infra", targetKey: "serverFarm", targetCount: 5, rewardGold: 80000, rewardTech: 2000 },
+            q6: { done: false, name: "🌌 Hegemon of the Cosmos", desc: "Construct 3 Interstellar Trade Gates (Era 4).", targetType: "infra", targetKey: "starGate", targetCount: 3, rewardGold: 1000000, rewardTech: 15000 }
+        },
+        trophies: {
+            t1: { unlocked: false, name: "💰 Riverbed Millionaire", desc: "Accumulate a total national treasury of 10,000 Gold.", buff: "+10% Permanent active click harvest power." },
+            t2: { unlocked: false, name: "👨‍👩‍👦 Sovereign Prosperity", desc: "Reach a population scale of 100 or more citizens.", buff: "+10% Permanent baseline global happiness." },
+            t3: { unlocked: false, name: "⚔️ Legendary Conqueror", desc: "Possess an offensive tactical combat rating above 10,000 ATK.", buff: "10% Discount on purchase prices of all military units." },
+            t4: { unlocked: false, name: "🚀 Transcendent Singularity", desc: "Evolve into the ultimate Cosmic Multiverse Era.", buff: "+25% Science point accumulation speed 🔬." }
+        }
+    };
+
+    let gameState = JSON.parse(JSON.stringify(defaultGameState));
+
+    const campaigns = [
+        { name: "🗺️ Subdue Outpost Tribes", reqAtk: 10, rewardGold: 250, rewardTech: 10, era: 0 },
+        { name: "🛡️ Quell Rebel Warlords", reqAtk: 150, rewardGold: 3500, rewardTech: 90, era: 1 },
+        { name: "⚔️ Colonial Sovereignty Wars", reqAtk: 950, rewardGold: 40000, rewardTech: 450, era: 2 },
+        { name: "🚀 Solar System Supremacy", reqAtk: 7000, rewardGold: 450000, rewardTech: 3500, era: 3 },
+        { name: "🌀 Conquer the Multiverse Axes", reqAtk: 60000, rewardGold: 6500000, rewardTech: 30000, era: 4 }
+    ];
+
+    // Colony Configurations: territories acquired turn into investment zones
+    const colonyConfig = [
+        { name: "🏝️ Primeval Barley Isle", flavor: "Fertile alluvial plains near ancient river beds.", type: "food", base: 0.04, label: "Food Yield" },
+        { name: "⛰️ Iron Ore Highlands", flavor: "A highly strategic mineral extraction territory.", type: "atk", base: 0.03, label: "Military ATK" },
+        { name: "🏙️ Trade Port Colony", flavor: "A bustling maritime harbor hosting distant fleets.", type: "gold", base: 0.04, label: "Gold Production" },
+        { name: "🛰️ Outpost Orbital Hub", flavor: "Deep space outpost tracking solar activity.", type: "pop", base: 25, label: "Max Population Limit" },
+        { name: "🌌 Multidimensional Rift", flavor: "Warped space-time harboring infinite records.", type: "science", base: 0.05, label: "Science Accumulation" }
+    ];
+
+    // Capital placement text variants across tiers
+    const locationLogs = [
+        "📍 Location: Primitive Capital (Coordinates 0,0 - First Continental Axis)",
+        "📍 Location: Royal Keep, High Medieval Kingdom (Northern Trade Route Extension)",
+        "📍 Location: Industrial Smog Megalopolis (Global Northern Hemisphere Control)",
+        "📍 Location: Core Digitized Central Nervous Hub (Planetary Sub-Crust Network)",
+        "📍 Location: Quantum Singularity Cosmic Core (Spanning Continuum Matrix)"
+    ];
+
+    const eraNames = [
+        "Era: Stone Age 🗿", "Era: Medieval Era 🏰", "Era: Industrial Age ⚙️", "Era: Digital & Sci-Fi Era 🏙️", "Era: Cosmic Multiverse 🌌"
+    ];
+    const civTitles = [
+        "PRIMITIVE TRIBE 🏠", "MEDIEVAL KINGDOM 🏰", "STEAM INDUSTRIAL EMPIRE 🏙️", "DIGITAL HYPER-CIVILIZATION 🤖", "QUANTUM MULTIVERSE OVERLORD 🚀"
+    ];
+    const evoRequirements = [
+        { gold: 1200, tech: 45 }, { gold: 9000, tech: 350 }, { gold: 75000, tech: 2400 }, { gold: 1200000, tech: 20000 }
+    ];
+
+    // ==========================================
+    // Difficulty System
+    // ==========================================
+    const DIFFICULTY_CONFIG = {
+        easy: {
+            label: "Easy",
+            desc: "+40% Gold/Food, +30% Science. Boss HP -25%, Boss DMG -30%.",
+            production: { gold: 1.4, food: 1.4, science: 1.3 },
+            bossModifier: { hp: 0.75, dmg: 0.7, reward: 1.0 },
+            raidRate: 0.7
+        },
+        normal: {
+            label: "Normal",
+            desc: "Standard experience. All stats as originally designed.",
+            production: { gold: 1.0, food: 1.0, science: 1.0 },
+            bossModifier: { hp: 1.0, dmg: 1.0, reward: 1.0 },
+            raidRate: 1.0
+        },
+        hard: {
+            label: "Hard",
+            desc: "-25% Gold/Food, -20% Science. Boss HP +60%, Boss DMG +50%, +50% Boss rewards, raids more frequent.",
+            production: { gold: 0.75, food: 0.75, science: 0.8 },
+            bossModifier: { hp: 1.6, dmg: 1.5, reward: 1.5 },
+            raidRate: 1.5
+        }
+    };
+
+    // ==========================================
+    // Era Boss Database (one boss per era, optional
+    // end-game challenge — does NOT block Evolve Era)
+    // ==========================================
+    const ERA_BOSS_DATABASE = {
+        0: {
+            name: "Mammoth King 👹", baseHp: 10000, baseAtk: 100, baseDef: 50, skillCooldown: 20,
+            skillDesc: "Every 20s: reduces city Happiness.",
+            onSkillTrigger: () => {
+                gameState.happiness = Math.max(10, gameState.happiness - 15);
+                logEvent("🚨 Mammoth King roars! City Happiness decreased by 15%!");
+            }
+        },
+        1: {
+            name: "Black Knight 🗡️", baseHp: 200000, baseAtk: 1500, baseDef: 400, skillCooldown: 15,
+            skillDesc: "Every 15s: destroys a portion of your military.",
+            onSkillTrigger: () => {
+                let hit = false;
+                for (let k in gameState.military) {
+                    if (gameState.military[k].count > 0) {
+                        let lost = Math.max(1, Math.floor(gameState.military[k].count * 0.08));
+                        gameState.military[k].count = Math.max(0, gameState.military[k].count - lost);
+                        hit = true;
+                    }
+                }
+                if (hit) logEvent("⚔️ The Black Knight's blade sweeps through! Part of your army was destroyed!");
+                recalc();
+            }
+        },
+        2: {
+            name: "Iron Golem 🤖", baseHp: 1000000, baseAtk: 6000, baseDef: 1200, skillCooldown: 18,
+            skillDesc: "Every 18s: crushes a portion of the treasury.",
+            onSkillTrigger: () => {
+                let lost = Math.floor(gameState.gold * 0.05);
+                gameState.gold = Math.max(0, gameState.gold - lost);
+                logEvent(`🔨 Iron Golem smashes the treasury! -${fmtNum(lost)} 💰`);
+            }
+        },
+        3: {
+            name: "AI Overlord 👾", baseHp: 5000000, baseAtk: 18000, baseDef: 3000, skillCooldown: 25,
+            skillDesc: "Every 25s: temporarily halts resource production.",
+            onSkillTrigger: () => {
+                logEvent("👾 AI Overlord hacked the system! All resource production frozen for 5 seconds!");
+                const prevMult = AdsManager.productionMultiplier;
+                AdsManager.productionMultiplier = 0;
+                setTimeout(() => { AdsManager.productionMultiplier = prevMult; }, 5000);
+            }
+        },
+        4: {
+            name: "Alien Emperor 👽", baseHp: 20000000, baseAtk: 60000, baseDef: 9000, skillCooldown: 22,
+            skillDesc: "Every 22s: drains Faith reserves.",
+            onSkillTrigger: () => {
+                let lost = Math.floor(gameState.faith * 0.15);
+                gameState.faith = Math.max(0, gameState.faith - lost);
+                logEvent(`👽 Alien Emperor drains your Faith! -${fmtNum(lost)} ⛪`);
+            }
+        }
+    };
+
+    // Hostile Raid Types targeting different resource types
+    const raidTypes = [
+        { name: "Land Incursion Force", icon: "🐎", resource: "gold", lossPct: 0.20, desc: "plundered the treasury reserves" },
+        { name: "Coastal Fleet Pirates", icon: "🏴‍☠️", resource: "food", lossPct: 0.30, desc: "burned down resource granaries" },
+        { name: "Sabotage Espionage Unit", icon: "🕵️", resource: "tech", lossPct: 0.25, desc: "compromised core research records" }
+    ];
+    const BOSS_RAID_EVERY = 5; 
+    let currentRaidType = null; 
+
+    let totalMaxPop = 5, freePop = 5;
+    let netGold = 0, netFood = 0, netScience = 0, netFaith = 0;
+    let totalDef = 0, totalAtk = 0;
+    let colonyGoldMult = 1, colonyFoodMult = 1, colonyAtkMult = 1, colonySciMult = 1, colonyPopBonus = 0;
+    let raidTimer = 0; const RAID_INTERVAL = 45;
+    let isInBossBattle = false; // pauses main tick (raids, ticks, events) while a Boss fight is active
+
+    // ==========================================
+    // Game Over / Crisis system state
+    // ==========================================
+    let isGameOver = false;                 // hard-stops the main tick once true
+    let foodCrisisTimer = 0;                // ms accumulated while food < 0 (Famine)
+    let goldCrisisTimer = 0;                // ms accumulated while gold < 0 (Debt)
+    const FAMINE_INTERVAL_MS = 4000;        // every 4s of negative food -> starvation tick
+    const DEBT_INTERVAL_MS = 4000;          // every 4s of negative gold -> desertion tick
+    const FAMINE_PRODUCTION_PENALTY = 0.5;  // -50% Gold/Food production while starving
+    const DEBT_PRODUCTION_PENALTY = 0.7;    // -30% Gold/Food production while in debt
+
+    function selectCiv(type) {
+        document.getElementById('civ-trade').classList.remove('selected');
+        document.getElementById('civ-war').classList.remove('selected');
+        if(type === 'trade') document.getElementById('civ-trade').classList.add('selected');
+        if(type === 'war') document.getElementById('civ-war').classList.add('selected');
+        gameState.selectedCiv = type;
+    }
+
+    function selectDifficulty(choice) {
+        // 1. Assign the chosen difficulty to game state
+        gameState.difficulty = choice;
+        gameState.difficultyChosen = true;
+
+        // Play clicker feedback sound
+        if (typeof AudioFX !== 'undefined' && AudioFX.play) {
+            AudioFX.play('click');
+        }
+
+        // 2. Log the event so the player knows which mode they're playing
+        const diffLabels = { easy: "✅ EASY", normal: "🔵 NORMAL", hard: "🔴 HARD" };
+        logEvent(`Civilization founded on difficulty: ${diffLabels[choice]}`);
+
+        const startDiffLabel = document.getElementById('start-screen-diff-label');
+        if (startDiffLabel) {
+            const startLabels = { easy: "Easy ✅", normal: "Normal ⚖️", hard: "Hard 🔴" };
+            startDiffLabel.innerText = startLabels[choice];
+        }
+
+        // 3. Smoothly hide the difficulty overlay (0.4s, matches the CSS transition)
+        const overlay = document.getElementById('difficulty-overlay');
+        if (overlay) {
+            overlay.style.transition = "opacity 0.4s ease";
+            overlay.style.opacity = "0";
+            overlay.style.pointerEvents = "none";
+            setTimeout(() => {
+                overlay.style.display = 'none';
+            }, 400);
+        }
+
+        // 4. Recalculate all production stats based on the new difficulty
+        recalc();
+        renderAll();
+
+        // 5. Auto-save to persist the choice
+        if (typeof saveGame === 'function') {
+            saveGame();
+        }
+    }
+
+    function startGame() {
+        document.getElementById('start-screen').style.opacity = '0';
+        setTimeout(() => { document.getElementById('start-screen').style.display = 'none'; }, 500);
+        AudioFX.play('buy');
+        CG.gameplayStart();
+        gameState.hasStarted = true;
+        saveGame(); recalc(); renderAll();
+    }
+
+    async function saveGame() {
+        gameState.lastSaveTime = Date.now();
+        await CloudManager.save(gameState);
+    }
+
+    async function loadGame() {
+
+        const save = await CloudManager.load();
+
+        if (!save) return;
+
+        Object.assign(gameState, save);
+
+        if (!gameState.campaignsWon)
+            gameState.campaignsWon = [false, false, false, false, false];
+
+        if (!gameState.colonyLevels)
+            gameState.colonyLevels = [0, 0, 0, 0, 0];
+
+        if (!gameState.eventLog)
+            gameState.eventLog = [];
+
+        if (typeof gameState.raidCount !== "number")
+            gameState.raidCount = 0;
+
+        if (typeof gameState.lastSaveTime !== "number")
+            gameState.lastSaveTime = Date.now();
+
+        if (!gameState.difficulty)
+            gameState.difficulty = 'normal';
+
+        if (typeof gameState.difficultyChosen !== "boolean")
+            gameState.difficultyChosen = true; // Pre-existing save = existing player, don't re-prompt
+
+        if (!gameState.bossLevels)
+            gameState.bossLevels = [0, 0, 0, 0, 0];
+
+        if (typeof gameState.gems !== "number")
+            gameState.gems = 0;
+
+        if (typeof gameState.wonderFragments !== "number")
+            gameState.wonderFragments = 0;
+
+        if (typeof gameState.permanentProdMultiplier !== "number")
+            gameState.permanentProdMultiplier = 1.0;
+
+        if (typeof gameState.permanentAtkMultiplier !== "number")
+            gameState.permanentAtkMultiplier = 1.0;
+
+        // Migration: saves created before this flag existed are, by definition,
+        // from a player who already got past the start screen.
+        if (typeof gameState.hasStarted !== "boolean")
+            gameState.hasStarted = true;
+
+        // Only skip the civ-select start screen for players who actually clicked
+        // "Found Empire" before. A freshly reset save (hasStarted: false) must
+        // show the start screen again, exactly like a brand-new player.
+        if (gameState.hasStarted) {
+            document.getElementById("start-screen").style.display = "none";
+        }
+
+        recalc();
+
+        renderAll();
+
+    }
+
+    // ===========================
+    // Local <-> Cloud Synchronization
+    // ===========================
+
+    async function synchronizeSave() {
+
+        const logged = await CloudManager.isLoggedIn();
+
+        if (!logged) return;
+
+        const cloud = await window.CrazyGames.SDK.data.getItem(SAVE_KEY);
+
+        const local = localStorage.getItem(SAVE_KEY);
+
+        if (!cloud && local) {
+
+            await window.CrazyGames.SDK.data.setItem(
+                SAVE_KEY,
+                local
+            );
+
+            console.log("Local save uploaded to cloud.");
+
+            return;
+        }
+
+        if (cloud) {
+
+            localStorage.setItem(
+                SAVE_KEY,
+                cloud
+            );
+
+            Object.assign(
+                gameState,
+                JSON.parse(cloud)
+            );
+
+            console.log("Cloud save synchronized.");
+
+            recalc();
+
+            renderAll();
+
+        }
+
+    }
+
+    async function updateCloudStatus() {
+
+        const logged = await CloudManager.isLoggedIn();
+
+        const statusEl = document.getElementById("cloudStatus");
+
+        if (statusEl) {
+            statusEl.innerHTML = logged
+                ? "☁ Cloud Sync Enabled"
+                : "💾 Local Save Only";
+        }
+
+    }
+
+    async function manualCloudSave() {
+        await saveGame();
+        showNotification("Progress saved successfully.");
+    }
+
+    async function manualCloudLoad() {
+        await loadGame();
+        showNotification("Progress loaded successfully.");
+    }
+
+    // ==========================================
+    // Offline Progress (Tab Sleep / Screen Lock Compensation)
+    // ==========================================
+
+    const MAX_OFFLINE_SECONDS = 4 * 60 * 60; // cap offline earnings at 4 hours
+    const MIN_OFFLINE_SECONDS = 30; // ignore quick tab switches
+
+    function handleOfflineProgress() {
+
+        if (typeof gameState.lastSaveTime !== "number") {
+            gameState.lastSaveTime = Date.now();
+            return;
+        }
+
+        const elapsedSec = (Date.now() - gameState.lastSaveTime) / 1000;
+        gameState.lastSaveTime = Date.now();
+
+        if (elapsedSec < MIN_OFFLINE_SECONDS) return;
+
+        const cappedSec = Math.min(elapsedSec, MAX_OFFLINE_SECONDS);
+
+        const earnedGold = Math.max(0, netGold) * cappedSec;
+        const earnedFood = Math.max(0, netFood) * cappedSec;
+        const earnedScience = Math.max(0, netScience) * cappedSec;
+        const earnedFaith = Math.max(0, netFaith) * cappedSec;
+
+        if (earnedGold <= 0 && earnedFood <= 0 && earnedScience <= 0 && earnedFaith <= 0) return;
+
+        gameState.gold += earnedGold;
+        gameState.food += earnedFood;
+        gameState.techPoints += earnedScience;
+        gameState.faith += earnedFaith;
+
+        recalc();
+        renderAll();
+
+        const mins = Math.floor(cappedSec / 60);
+        showNotification(
+            `Your empire kept running for ${mins} minutes while you were away:\n+${fmtNum(earnedGold)} 💰   +${fmtNum(earnedFood)} 🌾   +${fmtNum(earnedScience)} 🔬   +${fmtNum(earnedFaith)} ⛪`,
+            "🕐 Offline Progress"
+        );
+
+        saveGame();
+
+    }
+
+    document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'visible') {
+            handleOfflineProgress();
+        } else {
+            saveGame();
+        }
+    });
+
+    // ==========================================
+    // Ad-Rewarded Boosts
+    // ==========================================
+
+    const AD_BUTTON_COOLDOWN_SEC = 45; // 30-60s window to avoid ad spam / adError
+
+    function startAdButtonCooldown(btn, seconds) {
+        if (!btn) return;
+
+        // Defensive: clear any leftover timer on this exact button before starting a new one
+        if (btn._cooldownTimer) {
+            clearInterval(btn._cooldownTimer);
+            btn._cooldownTimer = null;
+        }
+
+        btn.disabled = true;
+
+        if (!btn.dataset.originalHtml) {
+            btn.dataset.originalHtml = btn.innerHTML;
+        }
+
+        let remaining = seconds;
+        btn.innerText = `⏳ ${remaining}s`;
+
+        btn._cooldownTimer = setInterval(() => {
+            remaining--;
+            if (remaining <= 0) {
+                clearInterval(btn._cooldownTimer);
+                btn._cooldownTimer = null;
+                btn.disabled = false;
+                btn.innerHTML = btn.dataset.originalHtml;
+            } else {
+                btn.innerText = `⏳ ${remaining}s`;
+            }
+        }, 1000);
+    }
+
+    function watchGoldAd(btn) {
+
+        AudioFX.play('click');
+        startAdButtonCooldown(btn, AD_BUTTON_COOLDOWN_SEC);
+
+        AdsManager.showRewardedAd(() => {
+
+            gameState.gold += 5000;
+
+            showNotification("Reward Granted!\n+5,000 Gold");
+
+            saveGame();
+
+            renderAll();
+
+        });
+
+    }
+
+    function claimDoubleReward(baseGold, baseScience, btn) {
+
+        AudioFX.play('click');
+        startAdButtonCooldown(btn, AD_BUTTON_COOLDOWN_SEC);
+
+        AdsManager.showRewardedAd(() => {
+
+            gameState.gold += baseGold * 2;
+
+            gameState.techPoints += baseScience * 2;
+
+            showNotification("Double Reward Activated!");
+
+            saveGame();
+
+            renderAll();
+
+        });
+
+    }
+
+    function activateProductionBoost(btn) {
+
+        AudioFX.play('click');
+        startAdButtonCooldown(btn, AD_BUTTON_COOLDOWN_SEC);
+
+        AdsManager.showRewardedAd(() => {
+
+            AdsManager.productionBoost = true;
+
+            AdsManager.productionMultiplier = 5;
+
+            AdsManager.productionEndTime = Date.now() + 60000;
+
+            showNotification("Production x5 for 60 seconds!");
+
+        });
+
+    }
+
+    function reviveEmpire(btn) {
+
+        AudioFX.play('click');
+        startAdButtonCooldown(btn, AD_BUTTON_COOLDOWN_SEC);
+
+        AdsManager.showRewardedAd(() => {
+
+            gameState.gold += 10000;
+
+            gameState.food += 5000;
+
+            gameState.happiness = 100;
+
+            showNotification("Your Empire Has Been Restored!");
+
+            saveGame();
+
+            renderAll();
+
+        });
+
+    }
+
+    function speedUpConstruction(btn) {
+
+        AudioFX.play('click');
+        startAdButtonCooldown(btn, AD_BUTTON_COOLDOWN_SEC);
+
+        AdsManager.showRewardedAd(() => {
+
+            gameState.gold += 20000;
+
+            gameState.techPoints += 500;
+
+            showNotification("Construction Speed Boost!");
+
+            renderAll();
+
+        });
+
+    }
+
+    function claimResourcePack(btn) {
+
+        AudioFX.play('click');
+        startAdButtonCooldown(btn, AD_BUTTON_COOLDOWN_SEC);
+
+        AdsManager.showRewardedAd(() => {
+
+            gameState.gold += 25000;
+
+            gameState.food += 15000;
+
+            gameState.techPoints += 800;
+
+            gameState.faith += 500;
+
+            showNotification("Resource Pack Claimed!");
+
+            renderAll();
+
+        });
+
+    }
+
+    // ==========================================
+    // Gems Shop — Permanent Upgrades
+    // (persisted in gameState + saveGame, unlike
+    // the temporary rewarded-ad boosts above)
+    // ==========================================
+
+    const GEMS_BOOST_STEP = 0.2;
+    const GEMS_BOOST_BASE_COST = 20;
+
+    function getProdBoostLevel() {
+        return Math.round(((gameState.permanentProdMultiplier || 1.0) - 1.0) / GEMS_BOOST_STEP);
+    }
+    function getProdBoostCost() {
+        return Math.floor(GEMS_BOOST_BASE_COST * Math.pow(1.5, getProdBoostLevel()));
+    }
+    function getAtkBoostLevel() {
+        return Math.round(((gameState.permanentAtkMultiplier || 1.0) - 1.0) / GEMS_BOOST_STEP);
+    }
+    function getAtkBoostCost() {
+        return Math.floor(GEMS_BOOST_BASE_COST * Math.pow(1.5, getAtkBoostLevel()));
+    }
+
+    function buyPermanentProdBoost() {
+        const cost = getProdBoostCost();
+        if ((gameState.gems || 0) < cost) {
+            showNotification(`You need ${cost} 💎 Gems to purchase this upgrade. Defeat Bosses to earn more Gems!`, "💎 Not Enough Gems");
+            return;
+        }
+        gameState.gems -= cost;
+        gameState.permanentProdMultiplier = (gameState.permanentProdMultiplier || 1.0) + GEMS_BOOST_STEP;
+        AudioFX.play('buy');
+        saveGame();
+        recalc();
+        renderAll();
+        showNotification(`Eternal Radiance activated! Gold/Food/Science output +${Math.round(GEMS_BOOST_STEP * 100)}% permanently (saved).`, "🌟 Upgrade Successful");
+    }
+
+    function buyPermanentAtkBoost() {
+        const cost = getAtkBoostCost();
+        if ((gameState.gems || 0) < cost) {
+            showNotification(`You need ${cost} 💎 Gems to purchase this upgrade. Defeat Bosses to earn more Gems!`, "💎 Not Enough Gems");
+            return;
+        }
+        gameState.gems -= cost;
+        gameState.permanentAtkMultiplier = (gameState.permanentAtkMultiplier || 1.0) + GEMS_BOOST_STEP;
+        AudioFX.play('buy');
+        saveGame();
+        recalc();
+        renderAll();
+        showNotification(`Eternal Strength activated! Total ATK +${Math.round(GEMS_BOOST_STEP * 100)}% permanently (saved).`, "⚔️ Upgrade Successful");
+    }
+
+    function updateGemsShopUI() {
+        const prodPct = Math.round(((gameState.permanentProdMultiplier || 1.0) - 1.0) * 100);
+        const atkPct = Math.round(((gameState.permanentAtkMultiplier || 1.0) - 1.0) * 100);
+
+        const prodTxt = document.getElementById('prod-mult-txt');
+        const atkTxt = document.getElementById('atk-mult-txt');
+        const prodCostEl = document.getElementById('prod-mult-cost');
+        const atkCostEl = document.getElementById('atk-mult-cost');
+        const prodBtn = document.getElementById('buy-prod-boost-btn');
+        const atkBtn = document.getElementById('buy-atk-boost-btn');
+
+        if (prodTxt) prodTxt.innerText = `+${prodPct}%`;
+        if (atkTxt) atkTxt.innerText = `+${atkPct}%`;
+
+        const prodCost = getProdBoostCost();
+        const atkCost = getAtkBoostCost();
+        if (prodCostEl) prodCostEl.innerText = fmtNum(prodCost);
+        if (atkCostEl) atkCostEl.innerText = fmtNum(atkCost);
+        if (prodBtn) prodBtn.disabled = (gameState.gems || 0) < prodCost;
+        if (atkBtn) atkBtn.disabled = (gameState.gems || 0) < atkCost;
+    }
+    // ==========================================
+    // Game Over trigger
+    // reason: 'population' | 'famine' | 'debt'
+    // ==========================================
+    function triggerGameOver(reason) {
+        if (isGameOver) return; // already shown, don't re-trigger
+        isGameOver = true;
+
+        const copy = {
+            population: {
+                icon: '💀',
+                title: 'CIVILIZATION COLLAPSED',
+                text: 'Your civilization has fallen because there are no citizens left alive to sustain it!'
+            },
+            famine: {
+                icon: '🌾',
+                title: 'DEATH BY FAMINE',
+                text: 'Prolonged starvation wiped out your entire population. Without food, your people could not survive.'
+            },
+            debt: {
+                icon: '🪙',
+                title: 'ECONOMIC COLLAPSE',
+                text: 'Crushing debt caused total unrest: your army deserted and your civilization disintegrated from within.'
+            }
+        }[reason] || {
+            icon: '💀',
+            title: 'CIVILIZATION COLLAPSED',
+            text: 'Your civilization could not withstand the crisis.'
+        };
+
+        document.getElementById('game-over-icon').innerText = copy.icon;
+        document.getElementById('game-over-title').innerText = copy.title;
+        document.getElementById('game-over-reason').innerText = copy.text;
+        document.getElementById('game-over-stats').innerHTML = `
+            <div><span>Era Reached</span><span>${gameState.currentEra + 1}</span></div>
+            <div><span>Final Treasury</span><span>${fmtNum(Math.floor(gameState.gold))} 💰</span></div>
+            <div><span>Final Population</span><span>${Math.floor(gameState.population)}</span></div>
+            <div><span>Attack Power</span><span>${fmtNum(totalAtk)} ⚔️</span></div>
+        `;
+
+        AudioFX.play('click');
+        const overlay = document.getElementById('game-over-overlay');
+        overlay.style.display = 'flex';
+        requestAnimationFrame(() => overlay.classList.add('show'));
+    }
+
+    // Resets every piece of runtime state and UI back to a brand-new-player
+    // look, WITHOUT depending on a page reload. This is what actually makes
+    // the Game Over / Reset buttons work reliably: some embedded/preview
+    // environments silently block location.reload(), which previously left
+    // the Game Over screen (or the current game screen) stuck on-screen even
+    // though the underlying save had already been reset.
+    function resetUIToFreshState(freshState) {
+        // 1. Reset runtime-only flags (not part of gameState, live as separate
+        //    module-level variables) so the main tick behaves like a fresh boot.
+        isGameOver = false;
+        foodCrisisTimer = 0;
+        goldCrisisTimer = 0;
+        isInBossBattle = false;
+        raidTimer = 0;
+        currentRaidType = null;
+        document.body.classList.remove('raid-flash');
+
+        // 2. Replace gameState's contents in place (same pattern loadGame()
+        //    already uses) so every closure referencing `gameState.xxx`
+        //    picks up the fresh values immediately.
+        Object.keys(gameState).forEach(k => delete gameState[k]);
+        Object.assign(gameState, freshState);
+
+        // 3. Hide any overlay that might still be open from the run that just ended.
+        ['game-over-overlay', 'event-overlay', 'notify-overlay', 'boss-battle-overlay', 'boss-defeat-overlay'].forEach(id => {
+            const el = document.getElementById(id);
+            if (el) { el.style.display = 'none'; el.classList.remove('show'); }
+        });
+
+        // 4. Undo startGame()'s opacity/display changes so the civ-select
+        //    start screen is fully visible again.
+        const startScreen = document.getElementById('start-screen');
+        if (startScreen) {
+            startScreen.style.display = 'flex';
+            startScreen.style.opacity = '1';
+        }
+        document.getElementById('civ-trade')?.classList.add('selected');
+        document.getElementById('civ-war')?.classList.remove('selected');
+
+        // 5. Undo selectDifficulty()'s opacity/pointer-events/display changes
+        //    so the difficulty overlay is fully visible again, on top of the
+        //    start screen — exactly like a first-time player sees it.
+        const diffOverlay = document.getElementById('difficulty-overlay');
+        if (diffOverlay) {
+            diffOverlay.style.display = 'flex';
+            diffOverlay.style.opacity = '1';
+            diffOverlay.style.pointerEvents = 'auto';
+        }
+        const startDiffLabel = document.getElementById('start-screen-diff-label');
+        if (startDiffLabel) startDiffLabel.innerText = "Normal ⚖️";
+
+        recalc();
+        renderAll();
+        renderEventLog();
+    }
+
+    // Overwrites BOTH localStorage and the cloud save (CrazyGames SDK) with a
+    // brand-new default game state, resets the live UI immediately, and then
+    // best-effort reloads the page for a truly clean slate (fresh timers/SDK
+    // handshake). Just clearing localStorage is not enough: if the player is
+    // logged into CrazyGames, synchronizeSave() would pull the old cloud save
+    // back down on the next load, undoing the reset.
+    async function performFullReset() {
+        const freshState = JSON.parse(JSON.stringify(defaultGameState));
+        // defaultGameState.lastSaveTime was computed once, back when the page
+        // first loaded, and never changes after that. Reusing it here would
+        // make the next load think a huge chunk of time passed "offline"
+        // since that original timestamp, wrongly awarding offline progress
+        // right after a reset. Stamp it with the real reset time instead.
+        freshState.lastSaveTime = Date.now();
+        try {
+            await CloudManager.save(freshState); // writes fresh state to localStorage + cloud (if logged in)
+        } catch (e) {
+            console.warn('Cloud reset failed, clearing local save only.', e);
+            localStorage.removeItem(SAVE_KEY);
+        }
+
+        // Reset visible state right away so the player sees the difficulty +
+        // start screens immediately, even if the reload below never happens.
+        resetUIToFreshState(freshState);
+
+        try {
+            location.reload();
+        } catch (e) {
+            console.warn('location.reload() was blocked in this environment; continuing with the in-place reset.', e);
+        }
+    }
+
+    function resetGame() {
+        showConfirmDialog("DO YOU WANT TO PURGE ALL PROGRESS AND RESET CIVILIZATION HISTORY?", () => {
+            performFullReset();
+        });
+    }
+
+    // Restart after a Game Over: no confirmation needed, the run is already lost.
+    // performFullReset() writes a brand-new default state (hasStarted: false,
+    // difficultyChosen: false, fresh lastSaveTime) and reloads the page, which
+    // naturally brings back the difficulty screen followed by the civ-select
+    // start screen — exactly like a first-time player. No manual DOM
+    // juggling is needed (or safe) beforehand, since the reload discards it.
+    async function restartAfterGameOver() {
+        const btn = document.querySelector('.btn-restart-game');
+        if (btn) {
+            btn.disabled = true;
+            btn.innerText = 'Rebuilding...';
+        }
+
+        try {
+            await performFullReset();
+            if (btn) {
+                btn.disabled = false;
+                btn.innerText = '🔄 Rebuild Civilization';
+            }
+        } catch (error) {
+            console.error("Failed to restart after Game Over:", error);
+            if (btn) {
+                btn.disabled = false;
+                btn.innerText = '🔄 Rebuild Civilization';
+            }
+        }
+    }
+
+    function switchTab(evt, id) {
+        document.querySelectorAll('.panel-tab-content').forEach(p => p.classList.remove('active'));
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        document.getElementById(id).classList.add('active');
+        if(evt) evt.target.classList.add('active');
+    }
+
+    function showColonyTab(idx) {
+        document.querySelectorAll('.panel-tab-content').forEach(p => p.classList.remove('active'));
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        document.getElementById('colony-tab').classList.add('active');
+        document.querySelectorAll('.tabs-container .tab-btn')[3].classList.add('active');
+        renderAll();
+        setTimeout(() => {
+            let card = document.getElementById(`colony-card-${idx}`);
+            if(card) card.scrollIntoView({behavior:'smooth', block:'center'});
+        }, 50);
+    }
+
+    function changeTax(v) {
+        gameState.taxRate = parseInt(v);
+        document.getElementById('tax-val-txt').innerText = v + "%";
+        document.getElementById('tax-happy-txt').innerText = "-" + (v * 1.5) + "%";
+        recalc();
+    }
+
+    function buyItem(category, key) {
+        let item = gameState[category][key];
+        let priceDiscount = (gameState.trophies.t3.unlocked && category === 'military') ? 0.9 : 1.0;
+        let finalCost = Math.floor(item.cost * priceDiscount);
+
+        // Population gate: the UI disables the buy button once freePop < popReq,
+        // but that check alone is cosmetic — a fast double-click (or the ~100ms
+        // window before the next validateButtons tick re-disables the button)
+        // could previously buy military units with no idle citizens available.
+        // Enforce the requirement here too, at the actual point of purchase.
+        if(category === 'military' && freePop < item.popReq) return;
+
+        if(gameState.gold >= finalCost) {
+            gameState.gold -= finalCost; item.count++;
+            item.cost = Math.floor(item.cost * 1.35);
+            AudioFX.play('buy'); checkQuests(); recalc(); renderAll();
+        }
+    }
+
+    function buyTech(key) {
+        let t = gameState.techs[key];
+        if(!t.bought && gameState.techPoints >= t.cost) {
+            gameState.techPoints -= t.cost; t.bought = true;
+            AudioFX.play('buy'); recalc(); renderAll();
+        }
+    }
+
+    function buyWonder(key) {
+        let w = gameState.wonders[key];
+        if(!w.built && gameState.gold >= w.cost) {
+            gameState.gold -= w.cost; w.built = true;
+            AudioFX.play('buy'); showNotification(`🗿 MONUMENTAL WONDER COMPLETED: ${w.name}`); CG.happytime(); recalc(); renderAll();
+        }
+    }
+
+    function claimQuest(qKey) {
+        let q = gameState.quests[qKey];
+        if(!q.done) {
+            q.done = true; gameState.gold += q.rewardGold; gameState.techPoints += q.rewardTech;
+            AudioFX.play('buy'); showNotification(`📜 QUEST ACCOMPLISHED: ${q.name}\nReward: +${q.rewardGold} Gold, +${q.rewardTech} Science!`);
+            renderAll(); recalc();
+        }
+    }
+
+    function launchCampaign(i) {
+        let c = campaigns[i];
+        if(totalAtk >= c.reqAtk) {
+            gameState.gold += c.rewardGold; gameState.techPoints += c.rewardTech;
+            gameState.campaignsWon[i] = true; 
+            gameState.colonyLevels[i] = 1; 
+            let col = colonyConfig[i];
+            showNotification(`⚔️ CAMPAIGN TRIUMPH! You integrated ${col.name} into the domain! Acquired +${fmtNum(c.rewardGold)} Gold, +${c.rewardTech} 🔬\n\nThis zone is now available for resource investments under the "🏝️ Colonies" tab.`);
+            saveGame(); recalc(); renderAll();
+            AdsManager.showMidroll();
+        }
+    }
+
+    function upgradeColony(idx) {
+        if(!gameState.campaignsWon[idx]) return;
+        let cost = colonyUpgradeCost(idx);
+        if(gameState.gold >= cost) {
+            gameState.gold -= cost;
+            gameState.colonyLevels[idx]++;
+            AudioFX.play('buy'); recalc(); renderAll();
+        }
+    }
+    function colonyUpgradeCost(idx) {
+        let level = gameState.colonyLevels[idx] || 1;
+        return Math.floor(300 * Math.pow(2.4, idx) * Math.pow(1.55, level - 1));
+    }
+
+    function evolveEra() {
+        let req = evoRequirements[gameState.currentEra];
+        if(!req) return;
+        if(gameState.gold >= req.gold && gameState.techPoints >= req.tech) {
+            gameState.gold -= req.gold; gameState.techPoints -= req.tech;
+            gameState.currentEra++;
+            if(gameState.currentEra === 4) gameState.trophies.t4.unlocked = true;
+            showNotification(`🎉 ADVANCEMENT! STATE HAS EVOLVED INTO: ${eraNames[gameState.currentEra].toUpperCase()}`);
+            CG.happytime();
+            recalc(); renderAll();
+            AdsManager.showMidroll();
+        } else {
+            showNotification("Insufficient gold or research points to orchestrate historical transition!");
+        }
+    }
+
+    // ==========================================
+    // Era Boss System (Optional end-game challenge —
+    // does NOT block Evolve Era, purely bonus content)
+    // ==========================================
+
+    let bossBattleTimer = null;
+    let bossBattleState = null; // { boss, playerMaxHp, playerHp, template }
+
+    function isEraBossUnlocked(era) {
+        if (!ERA_BOSS_DATABASE[era]) return false;
+
+        // Population must be reasonably developed (70%+ of max)
+        if (gameState.population < totalMaxPop * 0.7) return false;
+
+        // All technologies introduced in this era must be researched
+        for (let k in gameState.techs) {
+            if (gameState.techs[k].era === era && !gameState.techs[k].bought) return false;
+        }
+
+        // The campaign/expedition tied to this era must be completed
+        if (campaigns[era] && !gameState.campaignsWon[era]) return false;
+
+        return true;
+    }
+
+    function updateBossButtonUI() {
+        const era = gameState.currentEra;
+        const btn = document.getElementById('boss-fight-btn');
+        const txt = document.getElementById('boss-requirement-txt');
+        if (!btn || !txt) return;
+
+        const template = ERA_BOSS_DATABASE[era];
+        if (!template) {
+            txt.innerHTML = `No boss exists for this era.`;
+            btn.disabled = true;
+            btn.innerText = `FIGHT ERA BOSS 👹`;
+            return;
+        }
+
+        const level = (gameState.bossLevels[era] || 0) + 1;
+        const unlocked = isEraBossUnlocked(era);
+
+        btn.innerText = `FIGHT ${template.name} (Lv.${level}) 👹`;
+        btn.disabled = !unlocked;
+
+        if (unlocked) {
+            txt.innerHTML = `Challenge <strong>${template.name}</strong> for massive rewards: Gold, Science, 💎 Gems, and a chance at a 🧩 Wonder Fragment!`;
+        } else {
+            txt.innerHTML = `🔒 Unlocks when: Population ≥ 70% of max, all Era techs researched, and the Era's Expedition is completed.`;
+        }
+    }
+
+    function startEraBossFight() {
+        const era = gameState.currentEra;
+
+        if (!isEraBossUnlocked(era)) {
+            showNotification("You don't yet meet the requirements to challenge this era's Boss. Grow your population, finish researching, and complete the Expedition first.", "🔒 Requirements Not Met");
+            return;
+        }
+
+        if (totalAtk <= 0 && totalDef <= 0) {
+            showNotification("You need to build an army before challenging the Boss!", "⚔️ Army Required");
+            return;
+        }
+
+        const diff = DIFFICULTY_CONFIG[gameState.difficulty] || DIFFICULTY_CONFIG.normal;
+        const template = ERA_BOSS_DATABASE[era];
+        const level = (gameState.bossLevels[era] || 0) + 1;
+
+        const boss = {
+            name: template.name,
+            level: level,
+            era: era,
+            maxHp: Math.floor(template.baseHp * Math.pow(1.3, level - 1) * diff.bossModifier.hp),
+            atk: Math.floor(template.baseAtk * Math.pow(1.2, level - 1) * diff.bossModifier.dmg),
+            def: Math.floor(template.baseDef * Math.pow(1.15, level - 1)),
+            skillCooldown: template.skillCooldown,
+            skillTimer: 0
+        };
+        boss.hp = boss.maxHp;
+
+        const playerMaxHp = Math.max(200, Math.floor(totalDef * 8 + gameState.population * 2));
+
+        bossBattleState = { boss, playerMaxHp, playerHp: playerMaxHp, template };
+
+        AudioFX.play('event');
+        CG.gameplayStop();
+        isInBossBattle = true;
+
+        document.getElementById('boss-battle-overlay').style.display = 'flex';
+        document.getElementById('boss-name-txt').innerText = boss.name;
+        document.getElementById('boss-level-txt').innerText = `Level ${level} — ${template.skillDesc}`;
+        setBossBattleLog(`⚔️ The battle against ${boss.name} has begun!`);
+        renderBossBattleUI();
+
+        clearInterval(bossBattleTimer);
+        bossBattleTimer = setInterval(bossBattleTick, 1000);
+    }
+
+    function bossBattleTick() {
+        if (!bossBattleState) return;
+        const { boss } = bossBattleState;
+
+        const playerDps = Math.max(1, Math.floor(totalAtk - boss.def));
+        boss.hp -= playerDps;
+
+        const bossDps = Math.max(5, Math.floor(boss.atk - (totalDef * 0.2)));
+        bossBattleState.playerHp -= bossDps;
+
+        boss.skillTimer++;
+        if (boss.skillTimer >= boss.skillCooldown) {
+            boss.skillTimer = 0;
+            bossBattleState.template.onSkillTrigger();
+        }
+
+        setBossBattleLog(`You deal ${fmtNum(playerDps)} damage | ${boss.name} strikes back for ${fmtNum(bossDps)} damage`);
+        renderBossBattleUI();
+
+        if (boss.hp <= 0) {
+            endEraBossFight(true);
+        } else if (bossBattleState.playerHp <= 0) {
+            endEraBossFight(false);
+        }
+    }
+
+    function renderBossBattleUI() {
+        if (!bossBattleState) return;
+        const { boss, playerHp, playerMaxHp } = bossBattleState;
+        const bossPct = Math.max(0, (boss.hp / boss.maxHp) * 100);
+        const playerPct = Math.max(0, (playerHp / playerMaxHp) * 100);
+
+        document.getElementById('boss-hp-bar').style.width = bossPct + '%';
+        document.getElementById('boss-hp-txt').innerText = `${fmtNum(Math.max(0, boss.hp))} / ${fmtNum(boss.maxHp)}`;
+        document.getElementById('player-hp-bar').style.width = playerPct + '%';
+        document.getElementById('player-hp-txt').innerText = `${fmtNum(Math.max(0, playerHp))} / ${fmtNum(playerMaxHp)}`;
+    }
+
+    function setBossBattleLog(msg) {
+        const log = document.getElementById('boss-battle-log');
+        if (log) log.innerText = msg;
+    }
+
+    function retreatFromBoss() {
+        clearInterval(bossBattleTimer);
+        bossBattleTimer = null;
+        bossBattleState = null;
+        document.getElementById('boss-battle-overlay').style.display = 'none';
+        document.getElementById('boss-defeat-overlay').style.display = 'none';
+        CG.gameplayStart();
+        isInBossBattle = false;
+        logEvent("🏳️ You have retreated from the Boss battle.");
+        renderAll();
+    }
+
+    function endEraBossFight(isWin) {
+        clearInterval(bossBattleTimer);
+        bossBattleTimer = null;
+
+        const { boss } = bossBattleState;
+        const era = boss.era;
+        const diff = DIFFICULTY_CONFIG[gameState.difficulty] || DIFFICULTY_CONFIG.normal;
+
+        if (isWin) {
+            document.getElementById('boss-battle-overlay').style.display = 'none';
+            CG.gameplayStart();
+            isInBossBattle = false;
+
+            const rewardScale = boss.level * diff.bossModifier.reward;
+            const goldReward = Math.floor(5000 * rewardScale * (era + 1));
+            const techReward = Math.floor(500 * rewardScale * (era + 1));
+            const gemsReward = Math.floor(5 * boss.level);
+
+            gameState.gold += goldReward;
+            gameState.techPoints += techReward;
+            gameState.gems = (gameState.gems || 0) + gemsReward;
+            gameState.bossLevels[era] = boss.level;
+
+            let fragmentMsg = "";
+            if (Math.random() < 0.4) {
+                gameState.wonderFragments = (gameState.wonderFragments || 0) + 1;
+                fragmentMsg = "\n🧩 You received 1 Wonder Fragment!";
+            }
+
+            AudioFX.play('buy');
+            CG.happytime();
+            logEvent(`🏆 Defeated ${boss.name} (Lv.${boss.level})! +${fmtNum(goldReward)} 💰`);
+            showNotification(
+                `You have defeated ${boss.name} (Lv.${boss.level})!\n+${fmtNum(goldReward)} 💰   +${fmtNum(techReward)} 🔬   +${gemsReward} 💎${fragmentMsg}\n\nThe Boss will be stronger next time you challenge it — but the rewards will be greater too!`,
+                "🏆 VICTORY!"
+            );
+
+            bossBattleState = null;
+            saveGame();
+            recalc();
+            renderAll();
+
+            AdsManager.showMidroll();
+        } else {
+            showBossDefeatPopup();
+        }
+    }
+
+    function showBossDefeatPopup() {
+        document.getElementById('boss-defeat-overlay').style.display = 'flex';
+    }
+
+    function reviveFromBossDefeat(btn) {
+        AudioFX.play('click');
+        startAdButtonCooldown(btn, AD_BUTTON_COOLDOWN_SEC);
+
+        AdsManager.showRewardedAd(() => {
+            if (!bossBattleState) return;
+
+            bossBattleState.playerHp = Math.floor(bossBattleState.playerMaxHp * 0.5);
+
+            document.getElementById('boss-defeat-overlay').style.display = 'none';
+            document.getElementById('boss-battle-overlay').style.display = 'flex';
+            CG.gameplayStop();
+
+            setBossBattleLog('❤️ Revival successful! The battle continues...');
+            renderBossBattleUI();
+
+            clearInterval(bossBattleTimer);
+            bossBattleTimer = setInterval(bossBattleTick, 1000);
+        });
+    }
+
+    function giveUpBossFight() {
+        document.getElementById('boss-defeat-overlay').style.display = 'none';
+        document.getElementById('boss-battle-overlay').style.display = 'none';
+        bossBattleState = null;
+        CG.gameplayStart();
+        isInBossBattle = false;
+        logEvent(`💀 Defeated by the Boss. Build a stronger army and try again.`);
+        renderAll();
+    }
+
+    function checkQuests() {
+        if(!gameState.trophies.t1.unlocked && gameState.gold >= 10000) { gameState.trophies.t1.unlocked = true; showNotification("🏆 ACHIEVEMENT UNLOCKED: Riverbed Millionaire!"); }
+        if(!gameState.trophies.t2.unlocked && gameState.population >= 100) { gameState.trophies.t2.unlocked = true; showNotification("🏆 ACHIEVEMENT UNLOCKED: Sovereign Prosperity!"); }
+        if(!gameState.trophies.t3.unlocked && totalAtk >= 10000) { gameState.trophies.t3.unlocked = true; showNotification("🏆 ACHIEVEMENT UNLOCKED: Legendary Conqueror!"); }
+    }
+
+    function recalc() {
+        totalMaxPop = 5; let usedPop = 0;
+        for(let k in gameState.infrastructure) {
+            if(gameState.infrastructure[k].era <= gameState.currentEra) {
+                totalMaxPop += (gameState.infrastructure[k].count * (gameState.infrastructure[k].popMax || 0));
+            }
+        }
+
+        colonyGoldMult = 1; colonyFoodMult = 1; colonyAtkMult = 1; colonySciMult = 1; colonyPopBonus = 0;
+        colonyConfig.forEach((col, idx) => {
+            if(gameState.campaignsWon[idx]) {
+                let lvl = gameState.colonyLevels[idx] || 1;
+                if(col.type === 'gold') colonyGoldMult += col.base * lvl;
+                if(col.type === 'food') colonyFoodMult += col.base * lvl;
+                if(col.type === 'atk') colonyAtkMult += col.base * lvl;
+                if(col.type === 'science') colonySciMult += col.base * lvl;
+                if(col.type === 'pop') colonyPopBonus += col.base * lvl;
+            }
+        });
+        totalMaxPop += colonyPopBonus;
+
+        let popDivisor = gameState.techs.automation.bought ? 2 : 1;
+        for(let k in gameState.military) {
+            usedPop += Math.ceil((gameState.military[k].count * gameState.military[k].popReq) / popDivisor);
+        }
+
+        let targetPop = totalMaxPop;
+        if(gameState.food <= 0) targetPop = Math.max(1, Math.floor(gameState.population * 0.75));
+        if(gameState.population < targetPop && gameState.food > 15) {
+            gameState.population += 0.04 + (gameState.currentEra * 0.02);
+        } else if (gameState.population > totalMaxPop) {
+            gameState.population = totalMaxPop;
+        }
+        let currentPopInt = Math.floor(gameState.population);
+        freePop = Math.max(0, currentPopInt - usedPop);
+
+        let taxImpact = gameState.taxRate * 1.5;
+        let foodCrisisImpact = (gameState.food <= 0) ? 45 : 0;
+        let trophy2Buff = gameState.trophies.t2.unlocked ? 10 : 0;
+        let infraHappyBonus = 0;
+        for(let k in gameState.infrastructure) {
+            if(gameState.infrastructure[k].era <= gameState.currentEra) {
+                infraHappyBonus += gameState.infrastructure[k].count * (gameState.infrastructure[k].happyInc || 0);
+            }
+        }
+        gameState.happiness = Math.max(10, Math.min(100, 100 - taxImpact - foodCrisisImpact + (gameState.wonders.pyramid.built ? 10 : 0) + trophy2Buff + infraHappyBonus));
+        let happyEff = gameState.happiness / 100;
+
+        let rawGoldInc = 0, rawFoodInc = 0;
+        for(let k in gameState.infrastructure) {
+            rawGoldInc += gameState.infrastructure[k].count * gameState.infrastructure[k].goldInc;
+            rawFoodInc += gameState.infrastructure[k].count * gameState.infrastructure[k].foodInc;
+        }
+
+        if(gameState.techs.plow.bought) rawFoodInc *= 1.2;
+        if(gameState.techs.nanoTech.bought && gameState.infrastructure.hydroFarm) rawFoodInc += (gameState.infrastructure.hydroFarm.count * 120 * 0.4);
+        if(gameState.techs.currency.bought) rawGoldInc *= 1.15;
+        if(gameState.techs.electricity.bought) rawGoldInc *= 1.20;
+        if(gameState.wonders.eiffel.built) rawGoldInc *= 1.20;
+        if(gameState.techs.steamEngine.bought && gameState.infrastructure.factory) rawGoldInc += (gameState.infrastructure.factory.count * 35 * 0.35);
+        if(gameState.selectedCiv === 'trade') rawGoldInc *= 1.15;
+
+        rawGoldInc *= colonyGoldMult;
+        rawFoodInc *= colonyFoodMult;
+
+        // --- Crisis production penalties ---
+        // Famine (Food < 0): citizens are busy scavenging/starving, production of everything drops.
+        // Debt (Gold < 0): unrest and unpaid workers cause a smaller, but real, production drop.
+        if (gameState.food < 0) { rawGoldInc *= FAMINE_PRODUCTION_PENALTY; rawFoodInc *= FAMINE_PRODUCTION_PENALTY; }
+        if (gameState.gold < 0) { rawGoldInc *= DEBT_PRODUCTION_PENALTY; rawFoodInc *= DEBT_PRODUCTION_PENALTY; }
+
+        let taxIncome = currentPopInt * (gameState.taxRate * 0.15);
+        netGold = ((rawGoldInc + taxIncome) * happyEff);
+
+        let foodConsumption = gameState.techs.singularity.bought ? 0 : (currentPopInt * 0.25); 
+        netFood = (rawFoodInc * happyEff) - foodConsumption;
+
+        netScience = 0; netFaith = 0;
+        for(let k in gameState.faiths) {
+            netScience += gameState.faiths[k].count * gameState.faiths[k].science;
+            netFaith += gameState.faiths[k].count * gameState.faiths[k].faith;
+        }
+        if(gameState.wonders.notredame.built) netFaith *= 1.25;
+        let trophy4Buff = gameState.trophies.t4.unlocked ? 1.25 : 1.0;
+        netScience = netScience * trophy4Buff * colonySciMult;
+        if(gameState.wonders.hadron.built) netScience *= 1.30;
+
+        // Apply Difficulty modifiers (Easy = bonus production, Hard = reduced production)
+        const diffCfg = DIFFICULTY_CONFIG[gameState.difficulty] || DIFFICULTY_CONFIG.normal;
+        netGold *= diffCfg.production.gold;
+        netFood *= diffCfg.production.food;
+        netScience *= diffCfg.production.science;
+
+        // Apply permanent Gems Shop multipliers (persisted, survives reload/cloud sync)
+        const permProd = gameState.permanentProdMultiplier || 1.0;
+        netGold *= permProd;
+        netFood *= permProd;
+        netScience *= permProd;
+
+        totalDef = 0; totalAtk = 0;
+        let atkBuff = gameState.techs.ironWorking.bought ? 1.25 : 1.0;
+        if(gameState.selectedCiv === 'war') atkBuff *= 1.15;
+        atkBuff *= colonyAtkMult;
+        atkBuff *= (gameState.permanentAtkMultiplier || 1.0);
+
+        for(let k in gameState.military) {
+            let individualAtkBuff = 1.0;
+            if(gameState.techs.warpDrive.bought && (k === 'starDestroyer' || k === 'singularityMech')) individualAtkBuff = 1.5;
+            totalDef += gameState.military[k].count * gameState.military[k].def;
+            totalAtk += gameState.military[k].count * gameState.military[k].atk * atkBuff * individualAtkBuff;
+        }
+
+        let totalCampaigns = campaigns.length;
+        let wonCount = 0;
+        for(let i=0; i<totalCampaigns; i++) {
+            let landNode = document.getElementById(`geo-${i}`);
+            if(gameState.campaignsWon[i]) {
+                wonCount++;
+                if(landNode) landNode.classList.add('occupied');
+            } else {
+                if(landNode) landNode.classList.remove('occupied');
+            }
+        }
+        let percentWon = Math.round((wonCount / totalCampaigns) * 100);
+        document.getElementById('colony-percent').innerText = percentWon + "%";
+        document.getElementById('colony-progress-fill').style.width = percentWon + "%";
+        document.getElementById('current-location-txt').innerHTML = locationLogs[gameState.currentEra];
+
+        document.getElementById('gold-txt').innerText = fmtNum(gameState.gold) + " 💰";
+        document.getElementById('gold-txt').style.color = gameState.gold < 0 ? 'var(--danger)' : '';
+        document.getElementById('gps-txt').innerText = (netGold >= 0 ? "+" : "") + netGold.toFixed(1);
+        document.getElementById('food-txt').innerText = fmtNum(gameState.food) + " 🌾";
+        document.getElementById('food-txt').style.color = gameState.food < 0 ? 'var(--danger)' : '';
+        document.getElementById('fps-txt').innerText = (netFood >= 0 ? "+" : "") + netFood.toFixed(1);
+        document.getElementById('fps-txt').style.color = netFood < 0 ? 'var(--danger)' : 'var(--success)';
+        
+        document.getElementById('pop-txt').innerText = `${currentPopInt}/${totalMaxPop} 👨‍👩‍👦`;
+        document.getElementById('pop-free-txt').innerText = freePop;
+        document.getElementById('happy-txt').innerText = `${gameState.happiness}% ` + (gameState.happiness > 70 ? "😊" : gameState.happiness > 40 ? "😐" : "🤬");
+        document.getElementById('happy-eff-txt').innerText = Math.floor(happyEff * 100) + "%" + (infraHappyBonus > 0 ? ` (+${infraHappyBonus.toFixed(1)}% via Infrastructure)` : '');
+
+        document.getElementById('mil-txt').innerText = `${fmtNum(totalDef)} DEF | ${fmtNum(totalAtk)} ATK`;
+        document.getElementById('scifaith-txt').innerText = `🔬${fmtNum(gameState.techPoints)} | ⛪${fmtNum(gameState.faith)}`;
+        document.getElementById('gems-txt').innerText = `💎${fmtNum(gameState.gems || 0)} | 🧩${fmtNum(gameState.wonderFragments || 0)}`;
+        document.getElementById('sps-txt').innerText = netScience.toFixed(1);
+        document.getElementById('faith-speed-txt').innerText = netFaith.toFixed(1);
+
+        document.getElementById('era-display').innerText = eraNames[gameState.currentEra];
+        document.getElementById('civ-title').innerText = civTitles[gameState.currentEra];
+        document.getElementById('civ-trait-badge').innerText = "Faction: " + (gameState.selectedCiv === 'trade' ? "Merchant Syndicate 💰" : "Militant Empire ⚔️");
+    }
+
+    function renderAll() {
+        const renderCumulative = (category, tabId, prefix, isMilitary = false) => {
+            const el = document.getElementById(tabId); if(!el) return; el.innerHTML = '';
+            let priceDiscount = (gameState.trophies.t3.unlocked && isMilitary) ? 0.9 : 1.0;
+
+            for(let k in gameState[category]) {
+                let item = gameState[category][k];
+                if(item.era <= gameState.currentEra) {
+                    let reqText = isMilitary ? `<p>Requires ${item.popReq} Idle Citizens.</p>` : '';
+                    let color = isMilitary ? 'var(--primary)' : (item.happyInc ? 'var(--warning)' : 'var(--success)');
+                    let happyTag = (!isMilitary && item.happyInc) ? ` <span style="font-size:0.65rem; background:rgba(245,158,11,0.2); color:var(--warning); padding:1px 4px; border-radius:3px;">😊 Happiness</span>` : '';
+                    let eraTag = ` <span style="font-size:0.65rem; background:#475569; padding:1px 4px; border-radius:3px; color:#cbd5e1;">Era ${item.era}</span>${happyTag}`;
+                    let currentCost = Math.floor(item.cost * priceDiscount);
+                    // Stats line: military & faith items have no `desc` field, so without this
+                    // the card shows a blank description and the player can't see a unit's
+                    // ATK/DEF or a shrine's Science/Faith yield before buying it.
+                    let statsText = '';
+                    if(category === 'military') {
+                        statsText = `<p style="color:#cbd5e1;">${item.atk ? `⚔️ ATK: ${fmtNum(item.atk)} ` : ''}${item.def ? `🛡️ DEF: ${fmtNum(item.def)}` : ''}</p>`;
+                    } else if(category === 'faiths') {
+                        statsText = `<p style="color:#cbd5e1;">${item.science ? `🔬 Science: +${item.science}/s ` : ''}${item.faith ? `⛪ Faith: +${item.faith}/s` : ''}</p>`;
+                    }
+                    el.innerHTML += `
+                        <div class="game-card">
+                            <div class="card-info">
+                                <strong>${item.name} (${item.count || 0})${eraTag}</strong><p>${item.desc || ''}</p>
+                                ${statsText}
+                                ${reqText}
+                                <p style="color:${color}">Cost: ${fmtNum(currentCost)} Gold</p>
+                            </div>
+                            <button class="btn-action" style="background:${color}" onclick="buyItem('${category}', '${k}')" id="btn-${prefix}-${k}">ACQUIRE / BUILD</button>
+                        </div>`;
+                }
+            }
+        };
+
+        renderCumulative('infrastructure', 'economy-tab', 'inf');
+        renderCumulative('military', 'military-tab', 'mil', true);
+        renderCumulative('faiths', 'faith-tab', 'fth');
+
+        // Render Quests
+        const qPanel = document.getElementById('quest-tab'); qPanel.innerHTML = '';
+        for(let k in gameState.quests) {
+            let q = gameState.quests[k];
+            let currentProg = 0;
+            if(q.targetType === 'infra') currentProg = gameState.infrastructure[q.targetKey].count;
+            if(q.targetType === 'mil') currentProg = gameState.military[q.targetKey].count;
+            
+            let isReady = currentProg >= q.targetCount;
+            let statusHTML = q.done ? `<span style="color:var(--success); font-weight:bold;">COMPLETED ✔️</span>` : isReady ? `<button class="btn-action" style="background:var(--warning); color:black;" onclick="claimQuest('${k}')">CLAIM REWARD</button>` : `<span style="color:#94a3b8;">Progress: ${currentProg}/${q.targetCount}</span>`;
+
+            qPanel.innerHTML += `
+                <div class="game-card" style="border-left: 4px solid var(--primary);">
+                    <div class="card-info">
+                        <strong>${q.name}</strong><p>${q.desc}</p>
+                        <p style="color:var(--success); font-size:0.7rem;">Reward: +${q.rewardGold} Gold | +${q.rewardTech} 🔬</p>
+                    </div>
+                    <div>${statusHTML}</div>
+                </div>`;
+        }
+
+        // Render Trophies
+        const tPanel = document.getElementById('trophy-tab'); tPanel.innerHTML = '';
+        for(let k in gameState.trophies) {
+            let t = gameState.trophies[k];
+            let borderStyle = t.unlocked ? 'border: 1px solid var(--warning); background: rgba(245, 158, 11, 0.05);' : 'opacity: 0.5;';
+            tPanel.innerHTML += `
+                <div class="game-card" style="${borderStyle}">
+                    <div class="card-info">
+                        <strong style="color:${t.unlocked ? 'var(--warning)' : '#94a3b8'}">${t.unlocked ? '🏆' : '🔒'} ${t.name}</strong>
+                        <p>${t.desc}</p>
+                        <p style="color:var(--teal); font-weight:bold;">Inherent Buff: ${t.buff}</p>
+                    </div>
+                    <div><span style="font-weight:bold;">${t.unlocked ? "UNLOCKED" : "LOCKED"}</span></div>
+                </div>`;
+        }
+
+        // Render Techs
+        const tList = document.getElementById('tech-list'); tList.innerHTML = '';
+        for(let k in gameState.techs) {
+            let t = gameState.techs[k];
+            if(t.era <= gameState.currentEra) {
+                tList.innerHTML += `
+                    <div class="game-card" style="border-left:4px solid var(--purple);">
+                        <div class="card-info">
+                            <strong>${t.name} ${t.bought?'(RESEARCHED ✔️)':''}</strong><p>${t.desc}</p>
+                            <p style="color:#c084fc">Requirement: ${fmtNum(t.cost)} 🔬</p>
+                        </div>
+                        <button class="btn-action" style="background:var(--purple)" onclick="buyTech('${k}')" id="btn-tech-${k}" ${t.bought?'disabled':''}>RESEARCH</button>
+                    </div>`;
+            }
+        }
+
+        // Render Wonders
+        const wList = document.getElementById('wonder-tab'); wList.innerHTML = '';
+        for(let k in gameState.wonders) {
+            let w = gameState.wonders[k];
+            if(w.era <= gameState.currentEra) {
+                wList.innerHTML += `
+                    <div class="game-card" style="border:1px solid var(--warning);">
+                        <div class="card-info">
+                            <strong>${w.name} ${w.built?'(COMMISSIONED)':''}</strong><p>${w.desc}</p>
+                            <p style="color:var(--warning)">Cost: ${fmtNum(w.cost)} Gold</p>
+                        </div>
+                        <button class="btn-action" style="background:var(--warning); color:black;" onclick="buyWonder('${k}')" id="btn-won-${k}" ${w.built?'disabled':''}>CONSTRUCT</button>
+                    </div>`;
+            }
+        }
+
+        // Render Campaigns
+        const cList = document.getElementById('campaign-list'); cList.innerHTML = '';
+        campaigns.forEach((c, idx) => {
+            if(c.era <= gameState.currentEra) {
+                let isWon = gameState.campaignsWon[idx];
+                let btnHTML = isWon ? 
+                    `<button class="btn-action" style="background:var(--success)" disabled>CONQUERED ✔️</button>` :
+                    `<button class="btn-action" style="background:var(--danger)" onclick="launchCampaign(${idx})" id="btn-camp-${idx}">DEPLOY FORCES</button>`;
+
+                cList.innerHTML += `
+                    <div class="game-card" style="background:${isWon ? 'rgba(16, 185, 129, 0.1)' : 'rgba(16, 185, 129, 0.05)'}">
+                        <div class="card-info">
+                            <strong>${c.name} ${isWon ? '(Controlled Territory)' : ''}</strong><p>Required Combat Power: <span style="color:var(--danger)">${fmtNum(c.reqAtk)} ATK</span></p>
+                            <p style="color:var(--success)">Reward: +${fmtNum(c.rewardGold)} Gold | +${fmtNum(c.rewardTech)} 🔬</p>
+                        </div>
+                        ${btnHTML}
+                    </div>`;
+            }
+        });
+
+        // Render Colony Tab
+        const colList = document.getElementById('colony-list'); colList.innerHTML = '';
+        colList.innerHTML += `<div style="font-size:0.78rem; color:#94a3b8; margin-bottom:4px;">Each conquered colony can be upgraded using Gold to accumulate permanent resource bonuses. Click on the continents above for quick navigation.</div>`;
+        colonyConfig.forEach((col, idx) => {
+            let isWon = gameState.campaignsWon[idx];
+            let level = gameState.colonyLevels[idx] || 0;
+            let bonusNow = isWon ? (col.type === 'pop' ? (col.base * level) : (col.base * level * 100)) : 0;
+            let bonusText = col.type === 'pop' ? `+${bonusNow.toFixed(0)} ${col.label}` : `+${bonusNow.toFixed(1)}% ${col.label}`;
+            let cost = colonyUpgradeCost(idx);
+
+            let bodyHTML = '';
+            if(!isWon) {
+                bodyHTML = `<p style="color:#64748b;">🔒 Region locked. Conquering forces must secure this zone under the "🗺️ Expedition" interface to initialize administration.</p>`;
+            } else {
+                bodyHTML = `<p>${col.flavor}</p>
+                    <p style="color:var(--teal); font-weight:bold;">Active Bonus: ${bonusText} <span class="colony-level-badge">Lv.${level}</span></p>`;
+            }
+
+            let btnHTML = !isWon ? `<button class="btn-action" disabled>LOCKED</button>` :
+                `<button class="btn-action" style="background:var(--teal); color:#022c22;" onclick="upgradeColony(${idx})" id="btn-col-${idx}">DEVELOP<br>${fmtNum(cost)} 💰</button>`;
+
+            colList.innerHTML += `
+                <div class="game-card" id="colony-card-${idx}" style="border:1px solid ${isWon ? 'var(--teal)' : '#334155'}; ${isWon ? 'background:rgba(20,184,166,0.07);' : 'opacity:0.65;'}">
+                    <div class="card-info">
+                        <strong>${col.name}</strong>
+                        ${bodyHTML}
+                    </div>
+                    ${btnHTML}
+                </div>`;
+        });
+
+        const evoTxt = document.getElementById('evo-requirement-txt');
+        let nextReq = evoRequirements[gameState.currentEra];
+        if(nextReq) {
+            evoTxt.innerHTML = `Requirements to evolve into the next civilization tier:<br><strong>${fmtNum(nextReq.gold)} Gold 💰</strong> and <strong>${fmtNum(nextReq.tech)} Science Points 🔬</strong>`;
+            document.getElementById('evo-btn').disabled = false;
+        } else {
+            evoTxt.innerHTML = `🌟 Civilization has achieved transcendent multiverse ascension! Complete construction of the Multiverse Core Engine to conclude historical records!`;
+            document.getElementById('evo-btn').disabled = true;
+        }
+
+        updateBossButtonUI();
+        updateGemsShopUI();
+    }
+
+    const clickBtn = document.getElementById('click-btn');
+    let lastGatherTime = 0;
+    clickBtn.addEventListener('pointerdown', (e) => {
+        // Ghost-click guard: ignore duplicate/rapid-fire events fired within
+        // a few ms of each other (touchstart + click firing back to back on mobile iframes)
+        const now = Date.now();
+        if (now - lastGatherTime < 60) return;
+        lastGatherTime = now;
+
+        let clickBuff = gameState.trophies.t1.unlocked ? 1.1 : 1.0;
+        let pwr = Math.floor((1 + gameState.currentEra * 10) * clickBuff);
+        gameState.gold += pwr; gameState.food += pwr;
+        AudioFX.play('click'); checkQuests(); recalc();
+        
+        let f = document.createElement('div'); f.classList.add('floating-number'); f.innerText = `+${pwr} 🏛️`;
+        const rect = clickBtn.getBoundingClientRect();
+        const x = (e.clientX ?? (rect.left + rect.width / 2)) - rect.left;
+        const y = (e.clientY ?? (rect.top + rect.height / 2)) - rect.top - 10;
+        f.style.left = `${x}px`; f.style.top = `${y}px`;
+        clickBtn.appendChild(f); setTimeout(() => f.remove(), 400);
+    });
+
+    setInterval(() => {
+        if (isInBossBattle || isGameOver) return; // Pause world simulation during a Boss fight, or once collapsed
+
+        // Safety net: if population is already at 0 (e.g. from a raid/event), end the run immediately.
+        if (Math.floor(gameState.population) <= 0) { triggerGameOver('population'); return; }
+
+        if(
+            AdsManager.productionBoost &&
+            Date.now() > AdsManager.productionEndTime
+        ){
+            AdsManager.productionBoost = false;
+            AdsManager.productionMultiplier = 1;
+        }
+
+        // Gold and Food are now allowed to go negative — see the Crisis handling
+        // block below. Negative resources trigger escalating consequences
+        // (Famine / Debt) instead of an instant, jarring Game Over.
+        gameState.gold += (netGold * AdsManager.productionMultiplier) / 10;
+        gameState.food += (netFood * AdsManager.productionMultiplier) / 10;
+        gameState.techPoints += (netScience * AdsManager.productionMultiplier) / 10; gameState.faith += (netFaith * AdsManager.productionMultiplier) / 10;
+
+        // ==========================================
+        // Crisis handling — runs every tick (100ms)
+        // ==========================================
+        const TICK_MS = 100;
+
+        // --- Famine: Food < 0 ---
+        // Every FAMINE_INTERVAL_MS of sustained negative food, 1-2 citizens starve.
+        // Production is already halved via the FAMINE_PRODUCTION_PENALTY in recalc().
+        if (gameState.food < 0) {
+            foodCrisisTimer += TICK_MS;
+            if (foodCrisisTimer >= FAMINE_INTERVAL_MS) {
+                foodCrisisTimer -= FAMINE_INTERVAL_MS;
+                const starved = 1 + Math.floor(Math.random() * 2); // 1 or 2
+                gameState.population = Math.max(0, gameState.population - starved);
+                logEvent(`🌾 Famine strikes: ${starved} citizen(s) starved to death.`);
+                showNotification(`${starved} citizen(s) have starved to death! Food reserves are negative — send workers to the fields immediately.`, '🌾 Famine Warning');
+            }
+        } else {
+            foodCrisisTimer = 0;
+        }
+
+        // --- Debt: Gold < 0 ---
+        // Every DEBT_INTERVAL_MS of sustained negative gold, one unpaid military unit deserts.
+        // Purchases are already blocked naturally (cost checks require gold >= cost).
+        if (gameState.gold < 0) {
+            goldCrisisTimer += TICK_MS;
+            if (goldCrisisTimer >= DEBT_INTERVAL_MS) {
+                goldCrisisTimer -= DEBT_INTERVAL_MS;
+                const unitKeys = Object.keys(gameState.military).filter(k => gameState.military[k].count > 0);
+                if (unitKeys.length > 0) {
+                    const desertKey = unitKeys[Math.floor(Math.random() * unitKeys.length)];
+                    gameState.military[desertKey].count -= 1;
+                    logEvent(`🪙 Debt crisis: an unpaid ${gameState.military[desertKey].name} deserted the ranks.`);
+                    showNotification(`Your treasury is in debt! An unpaid ${gameState.military[desertKey].name} has deserted.`, '🪙 Debt Warning');
+                } else {
+                    logEvent(`🪙 Debt crisis: no military left to desert, but unrest continues.`);
+                }
+            }
+        } else {
+            goldCrisisTimer = 0;
+        }
+
+        // --- Game Over: population wiped out ---
+        if (Math.floor(gameState.population) <= 0) {
+            triggerGameOver(gameState.food < 0 ? 'famine' : 'population');
+            return;
+        }
+
+        checkQuests(); recalc();
+
+        const validateButtons = (category, prefix) => {
+            let priceDiscount = (gameState.trophies.t3.unlocked && category === 'military') ? 0.9 : 1.0;
+            for(let k in gameState[category]) {
+                let el = document.getElementById(`btn-${prefix}-${k}`);
+                if(el) {
+                    let item = gameState[category][k];
+                    let popCheck = true;
+                    if(category === 'military') popCheck = freePop >= item.popReq;
+                    el.disabled = (gameState.gold < Math.floor(item.cost * priceDiscount) || !popCheck);
+                }
+            }
+        };
+        validateButtons('infrastructure', 'inf');
+        validateButtons('military', 'mil');
+        validateButtons('faiths', 'fth');
+
+        for(let k in gameState.techs) {
+            let el = document.getElementById(`btn-tech-${k}`);
+            if(el) el.disabled = gameState.techs[k].bought || gameState.techPoints < gameState.techs[k].cost;
+        }
+        campaigns.forEach((c, idx) => {
+            let el = document.getElementById(`btn-camp-${idx}`);
+            if(el) el.disabled = totalAtk < c.reqAtk || gameState.campaignsWon[idx];
+        });
+        colonyConfig.forEach((col, idx) => {
+            let el = document.getElementById(`btn-col-${idx}`);
+            if(el) el.disabled = !gameState.campaignsWon[idx] || gameState.gold < colonyUpgradeCost(idx);
+        });
+
+        raidTimer += 0.1 * (DIFFICULTY_CONFIG[gameState.difficulty] || DIFFICULTY_CONFIG.normal).raidRate;
+        let timeLeft = Math.ceil(RAID_INTERVAL - raidTimer);
+        let intel = document.getElementById('intel-txt');
+        let isBossIncoming = (gameState.raidCount + 1) % BOSS_RAID_EVERY === 0;
+        if(!currentRaidType) rollNextRaidType();
+
+        if(timeLeft <= 10) {
+            let warnLabel = isBossIncoming ? `👹 IMMINENT INVASION LEVY` : `${currentRaidType.icon} ${currentRaidType.name}`;
+            intel.innerHTML = `<span style="color:var(--danger); font-weight:bold;">${warnLabel} DEPLOYING IN: ${timeLeft}s</span>`;
+            if(timeLeft <= 3) { document.body.classList.add('raid-flash'); AudioFX.play('click'); }
+        } else {
+            document.body.classList.remove('raid-flash');
+            intel.innerText = `Defense Status: Secure (${timeLeft}s)`;
+        }
+
+        if(raidTimer >= RAID_INTERVAL) {
+            document.body.classList.remove('raid-flash');
+            executeRaidAndTriggerEvent();
+            raidTimer = 0;
+        }
+    }, 100);
+
+    // ===========================
+    // Auto Cloud Synchronization
+    // ===========================
+
+    setInterval(async () => {
+        await saveGame();
+    }, CloudManager.autoSyncInterval);
+
+    // ===========================
+    // Save Before Exit
+    // ===========================
+
+    window.addEventListener("beforeunload", async () => {
+        await saveGame();
+    });
+
+    function executeRaidAndTriggerEvent() {
+        gameState.raidCount++;
+        let isBoss = gameState.raidCount % BOSS_RAID_EVERY === 0;
+        let raidType = currentRaidType || raidTypes[0];
+        let baseMaxEnemy = [30, 250, 1800, 15000, 110000][gameState.currentEra];
+        let bossMult = isBoss ? 4.5 : 1;
+        let enemyPwr = Math.floor((Math.random() * baseMaxEnemy) + 5) * bossMult;
+
+        if(totalDef >= enemyPwr) {
+            let rewardMult = isBoss ? 14 : 8;
+            let reward = Math.floor(enemyPwr * rewardMult); gameState.gold += reward;
+            if(isBoss) {
+                showNotification(`👹 TOTAL TRIUMPH! The Grand Invasional Host (${fmtNum(Math.floor(enemyPwr))} ATK) was decisively shattered! Extracted massive spoils of +${fmtNum(reward)} Gold and salvaged +50 🔬 from host experimental weaponry.`);
+                gameState.techPoints += 50;
+                logEvent(`👹 Crushed Grand Invasional Host, +${fmtNum(reward)} 💰`);
+                CG.happytime();
+            } else {
+                showNotification(`🛡️ OUTPOST ENGAGEMENT SUCCESSFUL! Blocked ${raidType.icon} ${raidType.name} (${fmtNum(Math.floor(enemyPwr))} ATK), securing +${fmtNum(reward)} Gold in structural military spoils.`);
+                logEvent(`🛡️ Repelled ${raidType.name}, +${fmtNum(reward)} 💰`);
+            }
+        } else {
+            let lossPct = isBoss ? Math.min(0.5, raidType.lossPct + 0.2) : raidType.lossPct;
+            let resource = raidType.resource;
+            let lostAmount = 0;
+            if(resource === 'gold') { lostAmount = Math.floor(gameState.gold * lossPct); gameState.gold -= lostAmount; }
+            else if(resource === 'food') { lostAmount = Math.floor(gameState.food * lossPct); gameState.food = Math.max(0, gameState.food - lostAmount); }
+            else if(resource === 'tech') { lostAmount = Math.floor(gameState.techPoints * lossPct); gameState.techPoints = Math.max(0, gameState.techPoints - lostAmount); }
+            let resLabel = resource === 'gold' ? 'Gold 💰' : resource === 'food' ? 'Food Supplies 🌾' : 'Science Progress 🔬';
+
+            if(isBoss) {
+                let popLost = Math.max(1, Math.floor(gameState.population * 0.1));
+                gameState.population = Math.max(1, gameState.population - popLost);
+                showNotification(`💀 CRITICAL BREAKTHROUGH! Hostile vanguard teams breached defenses! Squandered ${fmtNum(lostAmount)} ${resLabel} and suffered ${popLost} civilian casualties during capital looting.`);
+                logEvent(`💀 Capital sacked by Invasional Host, -${fmtNum(lostAmount)} ${resLabel}, -${popLost} population`);
+            } else {
+                showNotification(`❌ BREACH REGISTERED! ${raidType.icon} ${raidType.name} has successfully ${raidType.desc}, tracking -${fmtNum(lostAmount)} ${resLabel}.`);
+                logEvent(`❌ ${raidType.name} pillaged sectors, -${fmtNum(lostAmount)} ${resLabel}`);
+            }
+        }
+        currentRaidType = null;
+        saveGame();
+        setTimeout(triggerHistoricalEvent, 1000);
+    }
+
+    function triggerHistoricalEvent() {
+        AudioFX.play('event');
+        const overlay = document.getElementById('event-overlay');
+        const title = document.getElementById('event-title');
+        const desc = document.getElementById('event-desc');
+        const optionsContainer = document.getElementById('event-options');
+        
+        optionsContainer.innerHTML = '';
+        overlay.style.display = 'flex';
+
+        let sev = 1 + gameState.currentEra * 0.8;
+
+        const events = [
+            {
+                title: "🌋 UNEXPECTED SEISMIC DISASTER",
+                desc: "An unprecedented disaster is directly threatening industrial productivity across all localized sectors!",
+                options: [
+                    { text: `Authorize emergency structural funding (Lose ${Math.floor(300*sev)} Gold)`, action: () => { gameState.gold = Math.max(0, gameState.gold - Math.floor(300*sev)); logEvent(`🌋 Earthquake relief expenses: -${fmtNum(Math.floor(300*sev))} 💰`); } },
+                    { text: `Prioritize reserves over localized distress (Lose ${Math.floor(80*sev)} Food)`, action: () => { gameState.food = Math.max(0, gameState.food - Math.floor(80*sev)); logEvent(`🌋 Earthquake neglect losses: -${fmtNum(Math.floor(80*sev))} 🌾`); } }
+                ]
+            },
+            {
+                title: "💎 ERA OF GOLDEN DYNASTIC LUXURY",
+                desc: "Economic productivity booms as eminent philosophers gather to unify localized technological research!",
+                options: [
+                    { text: `Fund nationwide scientific celebrations (Acquire +${Math.floor(40*sev)} Science Points 🔬)`, action: () => { gameState.techPoints += Math.floor(40*sev); logEvent(`💎 Golden Era celebration: +${Math.floor(40*sev)} 🔬`); } },
+                    { text: `Consolidate treasury for upcoming wars (Acquire +${Math.floor(800*sev)} Gold 💰)`, action: () => { gameState.gold += Math.floor(800*sev); logEvent(`💎 Golden Era state accumulation: +${Math.floor(800*sev)} 💰`); } }
+                ]
+            },
+            {
+                title: "🌊 BREAKING DELUGE RIFT",
+                desc: "Severe flood lines expand, submerging vital agricultural sectors and waterfront granaries!",
+                options: [
+                    { text: `Conscript temporary labor units for dam building (Lose ${Math.floor(15*sev)} Population)`, action: () => { gameState.population = Math.max(1, gameState.population - Math.floor(15*sev)); logEvent(`🌊 Flooding flood conscription: -${Math.floor(15*sev)} citizens`); } },
+                    { text: `Abandon localized infrastructure to secure reserves (Lose ${Math.floor(120*sev)} Food)`, action: () => { gameState.food = Math.max(0, gameState.food - Math.floor(120*sev)); logEvent(`🌊 Flooding granary losses: -${Math.floor(120*sev)} 🌾`); } }
+                ]
+            },
+            {
+                title: "🦠 CONTINUOUS PLAGUE CONTAGION",
+                desc: "An unidentified pathogenic variant mutates across density hotspots, threatening economic stability!",
+                options: [
+                    { text: `Deploy structural quarantines & resources (Lose ${Math.floor(450*sev)} Gold)`, action: () => { gameState.gold = Math.max(0, gameState.gold - Math.floor(450*sev)); logEvent(`🦠 Contagion containment spending: -${Math.floor(450*sev)} 💰`); } },
+                    { text: `Allow systemic immune filtering to process naturally (Lose ${Math.floor(10*sev)} Population, -Happiness)`, action: () => { gameState.population = Math.max(1, gameState.population - Math.floor(10*sev)); logEvent(`🦠 Contagion attrition cost: -${Math.floor(10*sev)} citizens`); } }
+                ]
+            },
+            {
+                title: "☄️ ANOMALOUS METEOR SHOWER",
+                desc: "Exotic element deposits land inside borders, providing unique research profiles alongside security risks!",
+                options: [
+                    { text: `Authorize archeological excavation fleets (Acquire +${Math.floor(25*sev)} Science 🔬, lose ${Math.floor(100*sev)} Gold)`, action: () => { gameState.techPoints += Math.floor(25*sev); gameState.gold = Math.max(0, gameState.gold - Math.floor(100*sev)); logEvent(`☄️ Meteor recovery projects: +${Math.floor(25*sev)} 🔬`); } },
+                    { text: `Disregard anomalies to maintain defense focus (No effect)`, action: () => { logEvent(`☄️ Meteor ignored for security`); } }
+                ]
+            },
+            {
+                title: "⚡ GLOBAL INVERSION GEOMAGNETIC STORM",
+                desc: "Severe ionosphere disruptions cause cascade errors throughout primary localized networks!",
+                options: [
+                    { text: `Trigger secondary emergency core units (Lose ${Math.floor(250*sev)} Gold)`, action: () => { gameState.gold = Math.max(0, gameState.gold - Math.floor(250*sev)); logEvent(`⚡ Magnetic surge core buffering: -${Math.floor(250*sev)} 💰`); } },
+                    { text: `Accept systemic outages across sectors (Lose ${Math.floor(60*sev)} Food via localized storage failures)`, action: () => { gameState.food = Math.max(0, gameState.food - Math.floor(60*sev)); logEvent(`⚡ Magnetic surge grid failures: -${Math.floor(60*sev)} 🌾`); } }
+                ]
+            }
+        ];
+
+        let chosenEvent = events[Math.floor(Math.random() * events.length)];
+        title.innerText = chosenEvent.title;
+        desc.innerText = chosenEvent.desc;
+
+        chosenEvent.options.forEach(opt => {
+            let btn = document.createElement('button'); btn.className = 'btn-option'; btn.innerText = opt.text;
+            btn.onclick = () => { opt.action(); overlay.style.display = 'none'; recalc(); renderAll(); };
+            optionsContainer.appendChild(btn);
+        });
+    }
+
+    function logEvent(msg) {
+        gameState.eventLog.unshift({ msg, t: Date.now() });
+        if(gameState.eventLog.length > 6) gameState.eventLog.length = 6;
+        renderEventLog();
+    }
+    function renderEventLog() {
+        const box = document.getElementById('event-log-box'); if(!box) return;
+        if(!gameState.eventLog.length) { box.innerHTML = '<i>No history logged yet...</i>'; return; }
+        box.innerHTML = gameState.eventLog.map(e => `<div>• ${e.msg}</div>`).join('');
+    }
+    function rollNextRaidType() {
+        currentRaidType = raidTypes[Math.floor(Math.random() * raidTypes.length)];
+    }
+
+    function setupGlobeTooltips() {
+        const tooltip = document.getElementById('map-tooltip');
+        const tTitle = document.getElementById('tooltip-title');
+        const tDesc = document.getElementById('tooltip-desc');
+        colonyConfig.forEach((col, idx) => {
+            let node = document.getElementById(`geo-${idx}`);
+            if(!node) return;
+            node.addEventListener('mouseenter', () => {
+                let isWon = gameState.campaignsWon[idx];
+                let level = gameState.colonyLevels[idx] || 0;
+                tTitle.innerText = col.name;
+                tDesc.innerText = isWon ? `${col.flavor} (Level ${level} • ${col.label})` : `🔒 Unconquered — campaign deployment requires ${fmtNum(campaigns[idx].reqAtk)} ATK`;
+                tooltip.classList.add('show');
+            });
+            node.addEventListener('mouseleave', () => { tooltip.classList.remove('show'); });
+        });
+    }
+
+    // --- Loading screen progress bar ---
+    // Fills up to 90% on its own for visual feedback, then jumps to 100%
+    // and fades out only once the real game initialization has finished
+    // (see finishLoadingScreen(), called at the end of initGame()).
+    let __loadWidth = 0;
+    const __loadInterval = setInterval(() => {
+        const bar = document.getElementById('my-bar');
+        if (__loadWidth >= 90) return; // hold at 90% until real init is done
+        __loadWidth += 2;
+        if (bar) bar.style.width = __loadWidth + '%';
+    }, 30);
+
+    function finishLoadingScreen() {
+        clearInterval(__loadInterval);
+        const bar = document.getElementById('my-bar');
+        const loadingScreen = document.getElementById('loading-screen');
+        if (bar) bar.style.width = '100%';
+        setTimeout(() => {
+            if (loadingScreen) {
+                loadingScreen.style.opacity = '0';
+                setTimeout(() => { loadingScreen.style.display = 'none'; }, 500);
+            }
+        }, 200);
+    }
+
+    (async function initGame() {
+        await CG_INIT_PROMISE; // wait for the CrazyGames SDK handshake to finish (or fail) before touching cloud saves
+
+        try {
+            await synchronizeSave();
+            await loadGame();
+        } catch (e) {
+            console.warn("Cloud sync/load failed, continuing with local data:", e);
+        }
+
+        // Only show the difficulty overlay for brand-new players who have
+        // never explicitly chosen a difficulty. Returning players (loaded
+        // from Local/Cloud save) skip straight past it.
+        const diffOverlay = document.getElementById('difficulty-overlay');
+        if (diffOverlay) {
+            if (gameState.difficultyChosen) {
+                diffOverlay.style.display = 'none';
+            } else {
+                diffOverlay.style.display = 'flex';
+                diffOverlay.style.opacity = '1';
+                diffOverlay.style.pointerEvents = 'auto';
+            }
+        }
+
+        const startDiffLabel = document.getElementById('start-screen-diff-label');
+        if (startDiffLabel) {
+            const startLabels = { easy: "Easy ✅", normal: "Normal ⚖️", hard: "Hard 🔴" };
+            startDiffLabel.innerText = startLabels[gameState.difficulty] || "Normal ⚖️";
+        }
+
+        recalc();
+        renderAll();
+        handleOfflineProgress();
+        renderEventLog();
+        setupGlobeTooltips();
+        CG.loadingStop();
+        updateCloudStatus();
+        finishLoadingScreen();
+    })();
+</script>
+</body>
+</html>
